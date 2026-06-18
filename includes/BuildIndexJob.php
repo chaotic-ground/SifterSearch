@@ -2,19 +2,23 @@
 
 namespace MediaWiki\Extension\SifterSearch;
 
+use MediaWiki\Config\Config;
 use MediaWiki\JobQueue\GenericParameterJob;
 use MediaWiki\JobQueue\Job;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Parser\ParserOptions;
 use MediaWiki\Shell\Shell;
 use MediaWiki\Title\Title;
+use RuntimeException;
 
 /**
  * Rebuild the Pagefind search index from the current wiki content.
  *
- * The index is built from page content (not by crawling output HTML), so the
- * same job serves a live wiki and a static export: the records come from the
- * parser, and Pagefind's Node indexer turns them into the static bundle.
+ * The index is built from page content (not by crawling a deployed site), so
+ * the same job serves a live wiki and a static export. Rendered HTML is kept in
+ * a cache directory between runs and only re-rendered for pages that changed,
+ * so each run is incremental; the (cheap) Pagefind pass then rebuilds the whole
+ * bundle from the cache.
  */
 class BuildIndexJob extends Job implements GenericParameterJob {
 
@@ -25,54 +29,90 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 	}
 
 	/**
+	 * @inheritDoc
+	 */
+	public function getDeduplicationInfo() {
+		$info = parent::getDeduplicationInfo();
+		// A batch delay must not make otherwise-identical jobs look distinct.
+		if ( isset( $info['params']['jobReleaseTimestamp'] ) ) {
+			unset( $info['params']['jobReleaseTimestamp'] );
+		}
+		return $info;
+	}
+
+	/**
 	 * @return bool
 	 */
 	public function run() {
 		$services = MediaWikiServices::getInstance();
 		$config = $services->getMainConfig();
 
-		$outputDir = $config->get( 'SifterSearchOutputDir' );
-		if ( $outputDir === '' ) {
+		$bundleDir = $config->get( 'SifterSearchOutputDir' );
+		if ( $bundleDir === '' ) {
 			$this->setLastError( 'SifterSearchOutputDir is not configured' );
 			return false;
 		}
 
-		$records = $this->collectRecords( $services, $config->get( 'SifterSearchNamespaces' ) );
+		$cacheDir = $this->resolveCacheDir( $config );
+		if ( $cacheDir === null ) {
+			$this->setLastError( 'SifterSearch: set $wgSifterSearchCacheDir or $wgCacheDirectory' );
+			return false;
+		}
 
-		// Hand the records to the Node indexer via a temp file. Pagefind's
-		// indexing API (addHTMLFile) does its own HTML text extraction, so we
-		// pass a rendered HTML document per page rather than pre-stripped text.
-		$tmp = tempnam( wfTempDir(), 'sifter-records-' );
-		file_put_contents( $tmp, json_encode( $records ) );
+		try {
+			$binary = Pagefind::resolveBinaryPath( $config );
+		} catch ( RuntimeException $e ) {
+			$this->setLastError( $e->getMessage() );
+			return false;
+		}
 
-		$script = __DIR__ . '/../scripts/build-index.mjs';
-		$result = Shell::command(
-			$config->get( 'SifterSearchNodePath' ),
-			$script,
-			'--records', $tmp,
-			'--output', $outputDir
-		)->execute();
-		unlink( $tmp );
+		if ( !is_dir( $cacheDir ) && !mkdir( $cacheDir, 0777, true ) && !is_dir( $cacheDir ) ) {
+			$this->setLastError( "SifterSearch: cannot create cache directory $cacheDir" );
+			return false;
+		}
 
+		$this->syncCache( $services, $config, $cacheDir );
+
+		$result = Shell::command( $binary, '--site', $cacheDir, '--output-path', $bundleDir )
+			->execute();
 		if ( $result->getExitCode() !== 0 ) {
-			$this->setLastError( 'Pagefind indexer failed: ' . $result->getStderr() );
+			$this->setLastError( 'Pagefind failed: ' . $result->getStderr() );
 			return false;
 		}
 
 		return true;
 	}
 
+	private function resolveCacheDir( Config $config ): ?string {
+		$dir = $config->get( 'SifterSearchCacheDir' );
+		if ( $dir !== '' ) {
+			return rtrim( $dir, '/' );
+		}
+		$cacheDir = $config->get( 'CacheDirectory' );
+		if ( $cacheDir ) {
+			return rtrim( $cacheDir, '/' ) . '/sifter-search';
+		}
+		return null;
+	}
+
 	/**
-	 * @param MediaWikiServices $services
-	 * @param int[] $namespaces
-	 * @return array<int,array{url:string,content:string}>
+	 * Re-render only the pages that changed since the last run, drop pages that
+	 * were deleted or moved, and record state in a manifest the next run reads.
 	 */
-	private function collectRecords( MediaWikiServices $services, array $namespaces ): array {
+	private function syncCache( MediaWikiServices $services, Config $config, string $cacheDir ): void {
+		$manifestPath = $cacheDir . '/sifter-manifest.json';
+		$manifest = is_file( $manifestPath )
+			? ( json_decode( file_get_contents( $manifestPath ), true ) ?: [] )
+			: [];
+
 		$dbr = $services->getConnectionProvider()->getReplicaDatabase();
 		$res = $dbr->newSelectQueryBuilder()
-			->select( [ 'page_namespace', 'page_title' ] )
+			->select( [ 'page_id', 'page_namespace', 'page_title', 'page_touched' ] )
 			->from( 'page' )
-			->where( [ 'page_namespace' => $namespaces, 'page_is_redirect' => 0 ] )
+			->where( [
+				'page_namespace' => $config->get( 'SifterSearchNamespaces' ),
+				'page_is_redirect' => 0,
+			] )
 			->caller( __METHOD__ )
 			->fetchResultSet();
 
@@ -80,22 +120,62 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 		$parserOptions = ParserOptions::newFromAnon();
 		$lang = $services->getContentLanguage()->getHtmlCode();
 
-		$records = [];
+		$seen = [];
 		foreach ( $res as $row ) {
+			$id = (int)$row->page_id;
+			$seen[$id] = true;
+			if ( isset( $manifest[$id] ) && $manifest[$id]['touched'] === $row->page_touched ) {
+				// Unchanged since the last run: keep the cached HTML as-is.
+				continue;
+			}
+
 			$title = Title::makeTitle( $row->page_namespace, $row->page_title );
 			$page = $wikiPageFactory->newFromTitle( $title );
 			$parserOutput = $page->getParserOutput( $parserOptions );
 			if ( !$parserOutput ) {
 				continue;
 			}
-			$records[] = [
-				// getLocalURL is correct for a live wiki; a static exporter whose
-				// output paths differ may need to remap this (future refinement).
-				'url' => $title->getLocalURL(),
-				'content' => $this->wrapHtml( $lang, $title, $parserOutput->getText() ),
-			];
+
+			$relPath = $this->cachePathForTitle( $title );
+			// If the page moved, its old cache file would otherwise linger.
+			if ( isset( $manifest[$id]['file'] ) && $manifest[$id]['file'] !== $relPath ) {
+				$this->removeCacheFile( $cacheDir, $manifest[$id]['file'] );
+			}
+			$this->writeCacheFile(
+				$cacheDir,
+				$relPath,
+				$this->wrapHtml( $lang, $title, $parserOutput->getText() )
+			);
+			$manifest[$id] = [ 'touched' => $row->page_touched, 'file' => $relPath ];
 		}
-		return $records;
+
+		// Drop pages that no longer exist (deleted, or now redirects).
+		foreach ( array_keys( $manifest ) as $id ) {
+			if ( !isset( $seen[$id] ) ) {
+				$this->removeCacheFile( $cacheDir, $manifest[$id]['file'] );
+				unset( $manifest[$id] );
+			}
+		}
+
+		file_put_contents( $manifestPath, json_encode( $manifest ) );
+	}
+
+	/**
+	 * Map a page to a cache file path so the crawler computes a matching result
+	 * URL. Pretty URLs (/wiki/Foo) become wiki/Foo/index.html, i.e. /wiki/Foo/.
+	 * Query-string ($wgArticlePath without rewrites) URLs cannot map to a path
+	 * and fall back to a slug whose URL will not match the live URL.
+	 */
+	private function cachePathForTitle( Title $title ): string {
+		$url = $title->getLocalURL();
+		if ( strpos( $url, '?' ) !== false ) {
+			return 'sifter/' . $title->getArticleID() . '/index.html';
+		}
+		$path = ltrim( (string)parse_url( $url, PHP_URL_PATH ), '/' );
+		if ( $path === '' ) {
+			return 'sifter/' . $title->getArticleID() . '/index.html';
+		}
+		return rtrim( $path, '/' ) . '/index.html';
 	}
 
 	private function wrapHtml( string $lang, Title $title, string $bodyHtml ): string {
@@ -105,5 +185,21 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 			. "<body><h1>$titleText</h1>"
 			. "<div data-pagefind-body>$bodyHtml</div>"
 			. '</body></html>';
+	}
+
+	private function writeCacheFile( string $cacheDir, string $relPath, string $html ): void {
+		$full = $cacheDir . '/' . $relPath;
+		$dir = dirname( $full );
+		if ( !is_dir( $dir ) ) {
+			mkdir( $dir, 0777, true );
+		}
+		file_put_contents( $full, $html );
+	}
+
+	private function removeCacheFile( string $cacheDir, string $relPath ): void {
+		$full = $cacheDir . '/' . $relPath;
+		if ( is_file( $full ) ) {
+			unlink( $full );
+		}
 	}
 }

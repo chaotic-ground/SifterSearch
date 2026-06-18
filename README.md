@@ -12,38 +12,39 @@ The name is from *to sift* — *sifting through* a pile to find what you want.
 
 ## How it works
 
-The index is built from page **content**, not by crawling output HTML, so the
-same path serves a live wiki and a static export:
+The index is built from page **content**, not by crawling a deployed site, so
+the same path serves a live wiki and a static export:
 
 1. When an indexed page changes, SifterSearch queues a rebuild job. The job
-   dedups, so a burst of edits — or a bulk import during a static build —
+   de-duplicates, so a burst of edits — or a bulk import during a static build —
    collapses into a single rebuild.
-2. The job renders the indexed pages and feeds them to the Pagefind indexer,
-   which writes the `pagefind/` bundle to `$wgSifterSearchOutputDir`. On a live
-   wiki the queue runs via your normal job runner; on a static build it is
-   drained by the build's `runJobs` step, so SifterSearch needs no knowledge of
-   the build pipeline.
+2. The job keeps the rendered HTML of indexed pages in a cache directory and
+   re-renders only what changed since the last run, then runs the bundled
+   Pagefind binary over the cache to write the `pagefind/` bundle to
+   `$wgSifterSearchOutputDir`. On a live wiki the queue runs via your normal job
+   runner; on a static build it is drained by the build's `runJobs` step, so
+   SifterSearch needs no knowledge of the build pipeline.
 3. On every page, the client loads the Pagefind UI from the bundle and mounts a
    search box.
 
-## Requirements
+## The Pagefind binary
 
-The indexer runs under Node.js. Install the npm dependencies (which include the
-Pagefind binary) in the extension directory, and make `node` reachable from the
-wiki:
-
-```sh
-npm install --omit=dev
-```
+The indexer is a self-contained binary — no Node.js or other runtime is needed.
+The extension auto-detects the bundled binary for the running platform (see
+[`bin/README.md`](bin/README.md)). The default distribution ships only the most
+common server platform; on another platform, drop the matching binary in `bin/`
+or set `$wgSifterSearchPagefindBinary`.
 
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `$wgSifterSearchOutputDir` | `""` | Filesystem directory the index is written to. Must be web-served at the bundle path. Empty disables index building. |
+| `$wgSifterSearchOutputDir` | `""` | Directory the bundle is written to. Must be web-served at the bundle path. Empty disables indexing. |
 | `$wgSifterSearchBundlePath` | `/pagefind/` | URL path the client loads the bundle from. |
+| `$wgSifterSearchCacheDir` | `""` | Rendered-HTML cache for incremental rebuilds. Defaults to a subdirectory of `$wgCacheDirectory`. |
 | `$wgSifterSearchNamespaces` | `[ NS_MAIN ]` | Namespace IDs to index. |
-| `$wgSifterSearchNodePath` | `node` | Path to the Node.js binary. |
+| `$wgSifterSearchPagefindBinary` | `""` | Override the Pagefind binary path. Empty auto-detects `bin/`. |
+| `$wgSifterSearchBatchSeconds` | `0` | Delay rebuilds so bursts coalesce into one batch. |
 
 ## License
 

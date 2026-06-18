@@ -5,12 +5,13 @@ namespace MediaWiki\Extension\SifterSearch;
 use MediaWiki\Config\Config;
 use MediaWiki\Hook\BeforePageDisplayHook;
 use MediaWiki\JobQueue\JobQueueGroup;
+use MediaWiki\Page\Hook\PageDeleteCompleteHook;
 use MediaWiki\Storage\Hook\PageSaveCompleteHook;
 
 /**
  * Hook handlers for SifterSearch.
  */
-class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook {
+class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook, PageDeleteCompleteHook {
 
 	private JobQueueGroup $jobQueueGroup;
 	private Config $config;
@@ -37,11 +38,6 @@ class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook {
 	}
 
 	/**
-	 * Queue an index rebuild when an indexed page changes. The job dedups, so a
-	 * burst of edits (or a bulk import) collapses to a single rebuild. On a
-	 * static build the queue is drained by the build's runJobs step, so this
-	 * extension never has to know about the build pipeline.
-	 *
 	 * @param \WikiPage $wikiPage
 	 * @param \MediaWiki\User\UserIdentity $user
 	 * @param string $summary
@@ -50,9 +46,38 @@ class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook {
 	 * @param \MediaWiki\Storage\EditResult $editResult
 	 */
 	public function onPageSaveComplete( $wikiPage, $user, $summary, $flags, $revisionRecord, $editResult ) {
-		$namespaces = $this->config->get( 'SifterSearchNamespaces' );
-		if ( in_array( $wikiPage->getTitle()->getNamespace(), $namespaces, true ) ) {
-			$this->jobQueueGroup->push( new BuildIndexJob() );
+		if ( $this->isIndexed( $wikiPage->getTitle()->getNamespace() ) ) {
+			$this->enqueueRebuild();
 		}
+	}
+
+	/**
+	 * @param \MediaWiki\Page\ProperPageIdentity $page
+	 * @param \MediaWiki\Permissions\Authority $deleter
+	 * @param string $reason
+	 * @param int $pageID
+	 * @param \MediaWiki\Revision\RevisionRecord $deletedRev
+	 * @param \ManualLogEntry $logEntry
+	 * @param int $archivedRevisionCount
+	 */
+	public function onPageDeleteComplete( $page, $deleter, $reason, $pageID, $deletedRev, $logEntry, $archivedRevisionCount ) {
+		if ( $this->isIndexed( $page->getNamespace() ) ) {
+			$this->enqueueRebuild();
+		}
+	}
+
+	private function isIndexed( int $namespace ): bool {
+		return in_array( $namespace, $this->config->get( 'SifterSearchNamespaces' ), true );
+	}
+
+	/**
+	 * Queue a rebuild. The job de-duplicates, so a burst of changes collapses to
+	 * a single rebuild that picks up everything changed since the last run. An
+	 * optional delay coalesces bursts into one batch where the queue supports it.
+	 */
+	private function enqueueRebuild(): void {
+		$delay = (int)$this->config->get( 'SifterSearchBatchSeconds' );
+		$params = $delay > 0 ? [ 'jobReleaseTimestamp' => time() + $delay ] : [];
+		$this->jobQueueGroup->push( new BuildIndexJob( $params ) );
 	}
 }

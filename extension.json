@@ -24,7 +24,8 @@
 	},
 	"Hooks": {
 		"BeforePageDisplay": "main",
-		"PageSaveComplete": "main"
+		"PageSaveComplete": "main",
+		"PageDeleteComplete": "main"
 	},
 	"HookHandlers": {
 		"main": {
@@ -38,19 +39,27 @@
 	"config": {
 		"SifterSearchBundlePath": {
 			"value": "/pagefind/",
-			"description": "URL path (relative to the served site root) of the Pagefind search index bundle that the client loads."
+			"description": "URL path (relative to the served site root) the client loads the Pagefind bundle from."
 		},
 		"SifterSearchOutputDir": {
 			"value": "",
-			"description": "Filesystem directory the search index is written to. Must be web-served at SifterSearchBundlePath. Empty disables index building."
+			"description": "Filesystem directory the search bundle is written to. Must be web-served at SifterSearchBundlePath. Empty disables index building."
+		},
+		"SifterSearchCacheDir": {
+			"value": "",
+			"description": "Directory holding the rendered HTML the indexer crawls, kept between runs for incremental rebuilds. Defaults to a subdirectory of $wgCacheDirectory."
 		},
 		"SifterSearchNamespaces": {
 			"value": [0],
-			"description": "Namespace IDs to include in the search index."
+			"description": "Namespace IDs to index."
 		},
-		"SifterSearchNodePath": {
-			"value": "node",
-			"description": "Path to the Node.js binary used to run the Pagefind indexer."
+		"SifterSearchPagefindBinary": {
+			"value": "",
+			"description": "Path to the Pagefind binary. Empty auto-detects the bundled binary for this platform under the extension's bin/ directory."
+		},
+		"SifterSearchBatchSeconds": {
+			"value": 0,
+			"description": "Delay rebuilds by this many seconds so a burst of edits coalesces into one batch. 0 rebuilds as soon as the job runs (edits still batch via job de-duplication)."
 		}
 	},
 	"MessagesDirs": {
