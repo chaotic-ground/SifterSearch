@@ -1,0 +1,43 @@
+{
+	"name": "SifterSearch",
+	"version": "0.1.0",
+	"author": "[https://meta.wikimedia.org/wiki/User:Lens0021 Lens0021]",
+	"url": "https://www.mediawiki.org/wiki/Extension:SifterSearch",
+	"descriptionmsg": "sifter-desc",
+	"license-name": "GPL-3.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.43.0"
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\SifterSearch\\": "includes/"
+	},
+	"ResourceModules": {
+		"ext.sifter": {
+			"styles": ["ext.sifter.css"],
+			"scripts": ["ext.sifter.js"]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "SifterSearch/resources"
+	},
+	"Hooks": {
+		"BeforePageDisplay": "main"
+	},
+	"HookHandlers": {
+		"main": {
+			"class": "MediaWiki\\Extension\\SifterSearch\\Hooks"
+		}
+	},
+	"config": {
+		"SifterSearchBundlePath": {
+			"value": "/pagefind/",
+			"description": "URL path (relative to the served site root) of the Pagefind search index bundle that the client loads."
+		}
+	},
+	"MessagesDirs": {
+		"SifterSearch": ["i18n"]
+	},
+	"manifest_version": 2
+}
