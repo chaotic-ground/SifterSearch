@@ -1,0 +1,13 @@
+{
+	"name": "sifter-search",
+	"version": "0.1.0",
+	"description": "Client-side search for MediaWiki, backed by Pagefind",
+	"license": "GPL-3.0-or-later",
+	"private": true,
+	"dependencies": {
+		"pagefind": "^1.5.0"
+	},
+	"scripts": {
+		"build-index": "node scripts/build-index.mjs"
+	}
+}

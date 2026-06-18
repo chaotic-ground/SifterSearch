@@ -7,7 +7,7 @@
 	"license-name": "GPL-3.0-or-later",
 	"type": "other",
 	"requires": {
-		"MediaWiki": ">= 1.43.0"
+		"MediaWiki": ">= 1.45.0"
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\SifterSearch\\": "includes/"
@@ -23,17 +23,34 @@
 		"remoteExtPath": "SifterSearch/resources"
 	},
 	"Hooks": {
-		"BeforePageDisplay": "main"
+		"BeforePageDisplay": "main",
+		"PageSaveComplete": "main"
 	},
 	"HookHandlers": {
 		"main": {
-			"class": "MediaWiki\\Extension\\SifterSearch\\Hooks"
+			"class": "MediaWiki\\Extension\\SifterSearch\\Hooks",
+			"services": ["JobQueueGroup", "MainConfig"]
 		}
+	},
+	"JobClasses": {
+		"sifterSearchBuildIndex": "MediaWiki\\Extension\\SifterSearch\\BuildIndexJob"
 	},
 	"config": {
 		"SifterSearchBundlePath": {
 			"value": "/pagefind/",
 			"description": "URL path (relative to the served site root) of the Pagefind search index bundle that the client loads."
+		},
+		"SifterSearchOutputDir": {
+			"value": "",
+			"description": "Filesystem directory the search index is written to. Must be web-served at SifterSearchBundlePath. Empty disables index building."
+		},
+		"SifterSearchNamespaces": {
+			"value": [0],
+			"description": "Namespace IDs to include in the search index."
+		},
+		"SifterSearchNodePath": {
+			"value": "node",
+			"description": "Path to the Node.js binary used to run the Pagefind indexer."
 		}
 	},
 	"MessagesDirs": {
