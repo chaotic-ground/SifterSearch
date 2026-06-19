@@ -66,7 +66,7 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 			return false;
 		}
 
-		if ( !is_dir( $cacheDir ) && !mkdir( $cacheDir, 0777, true ) && !is_dir( $cacheDir ) ) {
+		if ( !wfMkdirParents( $cacheDir ) ) {
 			$this->setLastError( "SifterSearch: cannot create cache directory $cacheDir" );
 			return false;
 		}
@@ -197,10 +197,7 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 
 	private function writeCacheFile( string $cacheDir, string $relPath, string $html ): void {
 		$full = $cacheDir . '/' . $relPath;
-		$dir = dirname( $full );
-		if ( !is_dir( $dir ) ) {
-			mkdir( $dir, 0777, true );
-		}
+		wfMkdirParents( dirname( $full ) );
 		file_put_contents( $full, $html );
 	}
 

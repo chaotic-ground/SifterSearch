@@ -5,20 +5,37 @@ on: [push, pull_request]
 permissions: {}
 
 jobs:
-  # npm-test runs the extension's grunt task (eslint, stylelint, banana) inside a
-  # MediaWiki checkout; phan resolves core symbols the code's namespaced types
-  # need, which a bare phpcs run cannot provide.
-  quibble:
+  # One matrix for all the MediaWiki-toolchain checks. composer-test (phpcs +
+  # minus-x) runs directly, since Quibble has no phpcs stage; npm-test (grunt:
+  # eslint, stylelint, banana) and phan run inside a MediaWiki checkout via
+  # Quibble, which phan needs to resolve core symbols.
+  test:
     strategy:
       fail-fast: false
       matrix:
-        stage: [npm-test, phan]
+        stage: [composer-test, npm-test, phan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-      - uses: femiwiki/quibble-action@dc8d9ec9d6c86ba9805a77736c68f974d250aa8f # v1.0.0
+
+      - if: matrix.stage == 'composer-test'
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.3"
+          tools: composer
+      # mediawiki-phan-config (used only by the phan stage) pulls in phan, which
+      # requires ext-ast; phpcs and minus-x do not need it.
+      - if: matrix.stage == 'composer-test'
+        run: composer install --no-interaction --no-progress --ignore-platform-req=ext-ast
+      - if: matrix.stage == 'composer-test'
+        run: composer phpcs
+      - if: matrix.stage == 'composer-test'
+        run: composer test
+
+      - if: matrix.stage != 'composer-test'
+        uses: femiwiki/quibble-action@dc8d9ec9d6c86ba9805a77736c68f974d250aa8f # v1.0.0
         with:
           stage: ${{ matrix.stage }}
           # SifterSearch targets MediaWiki 1.45 (extension.json), whose namespaced
