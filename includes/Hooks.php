@@ -58,7 +58,9 @@ class Hooks implements BeforePageDisplayHook, RevisionRecordInsertedHook, PageDe
 	 * @param \ManualLogEntry $logEntry
 	 * @param int $archivedRevisionCount
 	 */
-	public function onPageDeleteComplete( $page, $deleter, $reason, $pageID, $deletedRev, $logEntry, $archivedRevisionCount ) {
+	public function onPageDeleteComplete(
+		$page, $deleter, $reason, $pageID, $deletedRev, $logEntry, $archivedRevisionCount
+	) {
 		if ( $this->isIndexed( $page->getNamespace() ) ) {
 			$this->enqueueRebuild();
 		}

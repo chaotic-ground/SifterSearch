@@ -1,8 +1,6 @@
 {
 	"@metadata": {
-		"authors": [
-			"Lens0021"
-		]
+		"authors": [ "Lens0021" ]
 	},
 	"sifter-desc": "Client-side search for statically-exported and small MediaWiki sites"
 }

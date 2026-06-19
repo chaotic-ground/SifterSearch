@@ -1,0 +1,22 @@
+name: Test
+
+on: [push, pull_request]
+
+permissions: {}
+
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.3"
+          tools: composer
+      # mediawiki-phan-config (used only by the Quibble phan stage) pulls in phan,
+      # which requires ext-ast; phpcs and minus-x do not need it.
+      - run: composer install --no-interaction --no-progress --ignore-platform-req=ext-ast
+      - run: composer phpcs
+      - run: composer test

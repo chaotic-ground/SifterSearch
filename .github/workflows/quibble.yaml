@@ -1,0 +1,29 @@
+name: Quibble
+
+on: [push, pull_request]
+
+permissions: {}
+
+jobs:
+  # npm-test runs the extension's grunt task (eslint, stylelint, banana) inside a
+  # MediaWiki checkout; phan resolves core symbols the code's namespaced types
+  # need, which a bare phpcs run cannot provide.
+  quibble:
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [npm-test, phan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: femiwiki/quibble-action@dc8d9ec9d6c86ba9805a77736c68f974d250aa8f # v1.0.0
+        with:
+          stage: ${{ matrix.stage }}
+          # SifterSearch targets MediaWiki 1.45 (extension.json), whose namespaced
+          # types (e.g. MediaWiki\JobQueue\Job) the code uses.
+          mediawiki-version: REL1_45
+          # PHP 8.3 images, matching the composer dev deps (which require >= 8.2).
+          quibble-docker-image: quibble-bookworm-php83
+          phan-docker-image: mediawiki-phan-php83

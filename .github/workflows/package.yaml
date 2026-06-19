@@ -1,0 +1,103 @@
+name: Package
+
+# Reusable: for each platform, bundle the extension together with the matching
+# Pagefind binary into a tarball and attach it to the given release tag. Also
+# produces a binary-less source tarball. Called by nightly.yaml.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to upload the tarballs to.
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  PAGEFIND_VERSION: v1.5.2
+
+jobs:
+  platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            target: x86_64-unknown-linux-musl
+            binary: pagefind-linux-x64
+          - name: linux-arm64
+            target: aarch64-unknown-linux-musl
+            binary: pagefind-linux-arm64
+          - name: darwin-x64
+            target: x86_64-apple-darwin
+            binary: pagefind-darwin-x64
+          - name: darwin-arm64
+            target: aarch64-apple-darwin
+            binary: pagefind-darwin-arm64
+          - name: windows-x64
+            target: x86_64-pc-windows-msvc
+            binary: pagefind-windows-x64.exe
+            windows: "true"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # gh release upload
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Fetch the Pagefind binary
+        env:
+          TARGET: ${{ matrix.target }}
+          BINARY: ${{ matrix.binary }}
+          WINDOWS: ${{ matrix.windows }}
+        run: |
+          base="https://github.com/Pagefind/pagefind/releases/download/${PAGEFIND_VERSION}/pagefind_extended-${PAGEFIND_VERSION}-${TARGET}"
+          mkdir -p bin
+          if [ "$WINDOWS" = "true" ]; then
+            curl -sSfL "${base}.zip" -o pagefind.zip
+            unzip -p pagefind.zip pagefind_extended.exe > "bin/${BINARY}"
+          else
+            curl -sSfL "${base}.tar.gz" | tar xz
+            mv pagefind_extended "bin/${BINARY}"
+          fi
+          chmod +x "bin/${BINARY}"
+
+      - name: Assemble the tarball
+        env:
+          NAME: ${{ matrix.name }}
+          BINARY: ${{ matrix.binary }}
+        run: |
+          stage=SifterSearch
+          mkdir -p "$stage/bin"
+          cp -r extension.json includes resources i18n README.md LICENSE "$stage/"
+          cp bin/README.md "bin/${BINARY}" "$stage/bin/"
+          tar -czf "SifterSearch-${NAME}.tar.gz" "$stage"
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          NAME: ${{ matrix.name }}
+        run: gh release upload "$TAG" "SifterSearch-${NAME}.tar.gz" --clobber
+
+  source:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # gh release upload
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Assemble the binary-less tarball
+        run: |
+          stage=SifterSearch
+          mkdir -p "$stage/bin"
+          cp -r extension.json includes resources i18n README.md LICENSE "$stage/"
+          cp bin/README.md "$stage/bin/"
+          tar -czf SifterSearch.tar.gz "$stage"
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: gh release upload "$TAG" SifterSearch.tar.gz --clobber

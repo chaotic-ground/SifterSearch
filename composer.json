@@ -1,0 +1,24 @@
+{
+	"name": "chaotic-ground/sifter-search",
+	"type": "mediawiki-extension",
+	"license": "GPL-3.0-or-later",
+	"scripts": {
+		"test": "minus-x check .",
+		"fix": "minus-x fix .",
+		"phpcs": "phpcs -sp",
+		"phpcbf": "phpcbf"
+	},
+	"require-dev": {
+		"mediawiki/mediawiki-codesniffer": "51.0.0",
+		"mediawiki/mediawiki-phan-config": "0.17.0",
+		"mediawiki/minus-x": "2.0.1"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"platform": {
+			"php": "8.3.0"
+		}
+	}
+}
