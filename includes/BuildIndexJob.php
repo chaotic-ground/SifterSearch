@@ -144,7 +144,7 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 			$this->writeCacheFile(
 				$cacheDir,
 				$relPath,
-				$this->wrapHtml( $lang, $title, $parserOutput->getText() )
+				$this->wrapHtml( $lang, $title, $parserOutput->getContentHolderText() )
 			);
 			$manifest[$id] = [ 'touched' => $row->page_touched, 'file' => $relPath ];
 		}
@@ -168,12 +168,20 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 	 */
 	private function cachePathForTitle( Title $title ): string {
 		$url = $title->getLocalURL();
+		// Query-string URLs (no rewriting) cannot map to a file path.
 		if ( strpos( $url, '?' ) !== false ) {
 			return 'sifter/' . $title->getArticleID() . '/index.html';
 		}
-		$path = ltrim( (string)parse_url( $url, PHP_URL_PATH ), '/' );
+		// Strip any leading "./" or "/" so the path is relative to the cache root.
+		$path = ltrim( (string)parse_url( $url, PHP_URL_PATH ), './' );
 		if ( $path === '' ) {
 			return 'sifter/' . $title->getArticleID() . '/index.html';
+		}
+		// A URL already pointing at a file (e.g. wikven's ./Foo.html) keeps its
+		// path; a directory-style URL (/wiki/Foo) gets an index.html so the
+		// crawler's computed URL matches the served one.
+		if ( preg_match( '/\.html?$/i', $path ) ) {
+			return $path;
 		}
 		return rtrim( $path, '/' ) . '/index.html';
 	}

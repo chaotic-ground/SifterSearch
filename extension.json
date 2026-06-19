@@ -24,7 +24,7 @@
 	},
 	"Hooks": {
 		"BeforePageDisplay": "main",
-		"PageSaveComplete": "main",
+		"RevisionRecordInserted": "main",
 		"PageDeleteComplete": "main"
 	},
 	"HookHandlers": {
@@ -43,7 +43,7 @@
 		},
 		"SifterSearchOutputDir": {
 			"value": "",
-			"description": "Filesystem directory the search bundle is written to. Must be web-served at SifterSearchBundlePath. Empty disables index building."
+			"description": "Filesystem path of the Pagefind bundle directory itself, i.e. the directory served at SifterSearchBundlePath (e.g. <docroot>/pagefind). Empty disables index building."
 		},
 		"SifterSearchCacheDir": {
 			"value": "",

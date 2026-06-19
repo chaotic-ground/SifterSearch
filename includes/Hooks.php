@@ -6,12 +6,12 @@ use MediaWiki\Config\Config;
 use MediaWiki\Hook\BeforePageDisplayHook;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\Hook\PageDeleteCompleteHook;
-use MediaWiki\Storage\Hook\PageSaveCompleteHook;
+use MediaWiki\Revision\Hook\RevisionRecordInsertedHook;
 
 /**
  * Hook handlers for SifterSearch.
  */
-class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook, PageDeleteCompleteHook {
+class Hooks implements BeforePageDisplayHook, RevisionRecordInsertedHook, PageDeleteCompleteHook {
 
 	private JobQueueGroup $jobQueueGroup;
 	private Config $config;
@@ -38,15 +38,13 @@ class Hooks implements BeforePageDisplayHook, PageSaveCompleteHook, PageDeleteCo
 	}
 
 	/**
-	 * @param \WikiPage $wikiPage
-	 * @param \MediaWiki\User\UserIdentity $user
-	 * @param string $summary
-	 * @param int $flags
+	 * Triggers on any revision insert, so it covers both live edits and the
+	 * old-revision imports a static-site build uses (which bypass the edit path).
+	 *
 	 * @param \MediaWiki\Revision\RevisionRecord $revisionRecord
-	 * @param \MediaWiki\Storage\EditResult $editResult
 	 */
-	public function onPageSaveComplete( $wikiPage, $user, $summary, $flags, $revisionRecord, $editResult ) {
-		if ( $this->isIndexed( $wikiPage->getTitle()->getNamespace() ) ) {
+	public function onRevisionRecordInserted( $revisionRecord ) {
+		if ( $this->isIndexed( $revisionRecord->getPage()->getNamespace() ) ) {
 			$this->enqueueRebuild();
 		}
 	}

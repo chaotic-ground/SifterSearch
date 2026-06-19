@@ -39,7 +39,7 @@ or set `$wgSifterSearchPagefindBinary`.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `$wgSifterSearchOutputDir` | `""` | Directory the bundle is written to. Must be web-served at the bundle path. Empty disables indexing. |
+| `$wgSifterSearchOutputDir` | `""` | The Pagefind bundle directory itself, served at the bundle path (e.g. `<docroot>/pagefind`). Empty disables indexing. |
 | `$wgSifterSearchBundlePath` | `/pagefind/` | URL path the client loads the bundle from. |
 | `$wgSifterSearchCacheDir` | `""` | Rendered-HTML cache for incremental rebuilds. Defaults to a subdirectory of `$wgCacheDirectory`. |
 | `$wgSifterSearchNamespaces` | `[ NS_MAIN ]` | Namespace IDs to index. |
