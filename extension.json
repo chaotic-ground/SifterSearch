@@ -14,8 +14,12 @@
 	},
 	"ResourceModules": {
 		"ext.sifter": {
-			"styles": [ "ext.sifter.css" ],
-			"scripts": [ "ext.sifter.js" ]
+			"styles": [
+				"ext.sifter.css"
+			],
+			"scripts": [
+				"ext.sifter.js"
+			]
 		}
 	},
 	"ResourceFileModulePaths": {
@@ -30,7 +34,10 @@
 	"HookHandlers": {
 		"main": {
 			"class": "MediaWiki\\Extension\\SifterSearch\\Hooks",
-			"services": [ "JobQueueGroup", "MainConfig" ]
+			"services": [
+				"JobQueueGroup",
+				"MainConfig"
+			]
 		}
 	},
 	"JobClasses": {
@@ -50,7 +57,9 @@
 			"description": "Directory holding the rendered HTML the indexer crawls, kept between runs for incremental rebuilds. Defaults to a subdirectory of $wgCacheDirectory."
 		},
 		"SifterSearchNamespaces": {
-			"value": [ 0 ],
+			"value": [
+				0
+			],
 			"description": "Namespace IDs to index."
 		},
 		"SifterSearchPagefindBinary": {
@@ -63,7 +72,9 @@
 		}
 	},
 	"MessagesDirs": {
-		"SifterSearch": [ "i18n" ]
+		"SifterSearch": [
+			"i18n"
+		]
 	},
 	"manifest_version": 2
 }
