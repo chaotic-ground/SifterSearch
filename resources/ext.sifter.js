@@ -20,5 +20,11 @@ module.exports = {
 				aborted = true;
 			} };
 		};
+
+		// The native "search for pages containing X" suggestion points at the
+		// wiki's full-text search; hide it when there is no such page.
+		if ( !mw.config.get( 'wgSifterSearchFullText' ) ) {
+			mw.util.addCSS( '.suggestions-special { display: none; }' );
+		}
 	}
 };

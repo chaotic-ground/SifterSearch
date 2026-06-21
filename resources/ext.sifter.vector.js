@@ -31,6 +31,13 @@ function fetchByTitle( term, limit, showDescription ) {
 
 module.exports = {
 	init: () => {
-		vectorSearch.init( { fetchByTitle } );
+		if ( mw.config.get( 'wgSifterSearchFullText' ) ) {
+			vectorSearch.init( { fetchByTitle } );
+		} else {
+			// No full-text search page: suppress the "search for pages containing X"
+			// footer. App.vue only renders it when urlGenerator returns a non-empty
+			// URL, and uses urlGenerator for nothing else on our code path.
+			vectorSearch.init( { fetchByTitle }, { generateUrl: () => '' } );
+		}
 	}
 };

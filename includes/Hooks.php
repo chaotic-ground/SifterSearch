@@ -37,10 +37,10 @@ class Hooks implements
 	 * @param \Skin $skin
 	 */
 	public function onBeforePageDisplay( $out, $skin ): void {
-		$out->addJsConfigVars(
-			'wgSifterSearchBundlePath',
-			$this->config->get( 'SifterSearchBundlePath' )
-		);
+		$out->addJsConfigVars( [
+			'wgSifterSearchBundlePath' => $this->config->get( 'SifterSearchBundlePath' ),
+			'wgSifterSearchFullText' => $this->config->get( 'SifterSearchFullText' ),
+		] );
 	}
 
 	/**
