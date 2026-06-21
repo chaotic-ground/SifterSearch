@@ -1,0 +1,40 @@
+name: Nightly
+
+# Build the per-platform tarballs from the latest main into a rolling "nightly"
+# prerelease, so downstreams (e.g. wikven) can track SifterSearch without a
+# formal release. Runs daily and on demand.
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # move the nightly tag and recreate its prerelease
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Recreate the rolling nightly release at the current commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete nightly --yes --cleanup-tag || true
+          gh release create nightly \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title Nightly \
+            --notes "Rolling build of the latest main. Not a stable release."
+
+  package:
+    needs: release
+    permissions:
+      contents: write # gh release upload
+    uses: ./.github/workflows/package.yaml
+    with:
+      tag: nightly
