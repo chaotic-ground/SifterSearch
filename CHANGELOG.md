@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.3.0...v0.4.0) (2026-06-21)
+
+
+### Features
+
+* send the search submit to the top result when full-text is off ([#15](https://github.com/chaotic-ground/SifterSearch/issues/15)) ([804b22e](https://github.com/chaotic-ground/SifterSearch/commit/804b22e31bc4dc82749624943519ca3729a4d725)), closes [#12](https://github.com/chaotic-ground/SifterSearch/issues/12)
+
 ## [0.3.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.2.0...v0.3.0) (2026-06-21)
 
 
