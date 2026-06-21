@@ -2,7 +2,8 @@ name: Package
 
 # Reusable: for each platform, bundle the extension together with the matching
 # Pagefind binary into a tarball and attach it to the given release tag. Also
-# produces a binary-less source tarball. Called by nightly.yaml.
+# produces a binary-less source tarball. Called by release-please.yaml (on a
+# formal release) and nightly.yaml (the rolling build).
 on:
   workflow_call:
     inputs:
