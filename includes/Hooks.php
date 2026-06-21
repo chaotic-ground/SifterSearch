@@ -51,6 +51,11 @@ class Hooks implements
 			// static export drops the query from server-generated URLs.
 			$vars['wgSifterSearchResultsPageUrl'] = $resultsTitle->getLocalURL();
 			if ( $out->getTitle() && $out->getTitle()->equals( $resultsTitle ) ) {
+				// Flag the results page so ext.sifter.results only mounts here. A
+				// static export (e.g. wikven) bundles every module into one
+				// self-executing file, so the module's code runs on every page and
+				// must gate on this rather than on having been added.
+				$vars['wgSifterSearchOnResultsPage'] = true;
 				$out->addModules( 'ext.sifter.results' );
 			}
 		}

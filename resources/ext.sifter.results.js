@@ -26,6 +26,11 @@ function loadScript() {
 }
 
 function mount() {
+	// A static export bundles every module into one self-executing file, so this
+	// module's code runs on every page; only mount on the results page itself.
+	if ( !mw.config.get( 'wgSifterSearchOnResultsPage' ) ) {
+		return;
+	}
 	const host = document.getElementById( 'mw-content-text' ) || document.body;
 	const element = document.createElement( 'div' );
 	element.id = 'sifter-results';
