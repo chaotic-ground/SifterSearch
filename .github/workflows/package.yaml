@@ -54,11 +54,10 @@ jobs:
         run: |
           base="https://github.com/Pagefind/pagefind/releases/download/${PAGEFIND_VERSION}/pagefind_extended-${PAGEFIND_VERSION}-${TARGET}"
           mkdir -p bin
+          curl -sSfL "${base}.tar.gz" | tar xz
           if [ "$WINDOWS" = "true" ]; then
-            curl -sSfL "${base}.zip" -o pagefind.zip
-            unzip -p pagefind.zip pagefind_extended.exe > "bin/${BINARY}"
+            mv pagefind_extended.exe "bin/${BINARY}"
           else
-            curl -sSfL "${base}.tar.gz" | tar xz
             mv pagefind_extended "bin/${BINARY}"
           fi
           chmod +x "bin/${BINARY}"
