@@ -6,7 +6,9 @@
 // Codex search box and dropdown work without a backend. Passing the client to
 // the skin's init() is the documented extension point (used by Wikidata) and
 // avoids the deprecated wgVectorSearchClient config var.
-const { query, titleOf, textOf, MAX_RESULTS } = require( 'ext.sifter.pagefind' );
+const {
+	query, titleOf, textOf, MAX_RESULTS, navigateToTopResultOnSubmit
+} = require( 'ext.sifter.pagefind' );
 const vectorSearch = require( 'skins.vector.search' );
 
 // Adapt Pagefind results to the typeahead SearchClient shape; see
@@ -35,9 +37,11 @@ module.exports = {
 			vectorSearch.init( { fetchByTitle } );
 		} else {
 			// No full-text search page: suppress the "search for pages containing X"
-			// footer. App.vue only renders it when urlGenerator returns a non-empty
-			// URL, and uses urlGenerator for nothing else on our code path.
+			// footer (App.vue only renders it when urlGenerator returns a non-empty
+			// URL, and uses urlGenerator for nothing else on our code path), and send
+			// the form submit to the top Pagefind result instead of Special:Search.
 			vectorSearch.init( { fetchByTitle }, { generateUrl: () => '' } );
+			navigateToTopResultOnSubmit();
 		}
 	}
 };

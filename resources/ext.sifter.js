@@ -4,7 +4,9 @@
 // SkinPageReadyConfig handler points skins that use core's searchSuggest at this
 // module. The native jquery.suggestions widget, attached by searchSuggest (our
 // dependency), is left intact; only its data source is swapped to Pagefind.
-const { query, titleOf, MAX_RESULTS } = require( 'ext.sifter.pagefind' );
+const {
+	query, titleOf, MAX_RESULTS, navigateToTopResultOnSubmit
+} = require( 'ext.sifter.pagefind' );
 
 module.exports = {
 	init: () => {
@@ -22,9 +24,11 @@ module.exports = {
 		};
 
 		// The native "search for pages containing X" suggestion points at the
-		// wiki's full-text search; hide it when there is no such page.
+		// wiki's full-text search; when there is no such page, hide it and send the
+		// form submit to the top Pagefind result instead.
 		if ( !mw.config.get( 'wgSifterSearchFullText' ) ) {
 			mw.util.addCSS( '.suggestions-special { display: none; }' );
+			navigateToTopResultOnSubmit();
 		}
 	}
 };
