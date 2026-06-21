@@ -13,12 +13,27 @@
 		"MediaWiki\\Extension\\SifterSearch\\": "includes/"
 	},
 	"ResourceModules": {
+		"ext.sifter.pagefind": {
+			"packageFiles": [
+				"ext.sifter.pagefind.js"
+			]
+		},
 		"ext.sifter": {
 			"packageFiles": [
 				"ext.sifter.js"
 			],
 			"dependencies": [
+				"ext.sifter.pagefind",
 				"mediawiki.searchSuggest"
+			]
+		},
+		"ext.sifter.vector": {
+			"packageFiles": [
+				"ext.sifter.vector.js"
+			],
+			"dependencies": [
+				"ext.sifter.pagefind",
+				"skins.vector.search"
 			]
 		}
 	},
