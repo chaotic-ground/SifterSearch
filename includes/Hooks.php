@@ -6,12 +6,19 @@ use MediaWiki\Config\Config;
 use MediaWiki\Hook\BeforePageDisplayHook;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\Hook\PageDeleteCompleteHook;
+use MediaWiki\ResourceLoader as RL;
 use MediaWiki\Revision\Hook\RevisionRecordInsertedHook;
+use MediaWiki\Skins\Hook\SkinPageReadyConfigHook;
 
 /**
  * Hook handlers for SifterSearch.
  */
-class Hooks implements BeforePageDisplayHook, RevisionRecordInsertedHook, PageDeleteCompleteHook {
+class Hooks implements
+	BeforePageDisplayHook,
+	SkinPageReadyConfigHook,
+	RevisionRecordInsertedHook,
+	PageDeleteCompleteHook
+{
 
 	private JobQueueGroup $jobQueueGroup;
 	private Config $config;
@@ -22,9 +29,9 @@ class Hooks implements BeforePageDisplayHook, RevisionRecordInsertedHook, PageDe
 	}
 
 	/**
-	 * Load the client-side search UI on every page, and expose the configured
-	 * bundle path to it. The module is queued unconditionally so a static
-	 * exporter that bundles a page's modules picks it up without extra wiring.
+	 * Expose the configured bundle path to the client. The search module itself
+	 * is not queued here; it is loaded on demand when a search input is focused,
+	 * wired in via onSkinPageReadyConfig().
 	 *
 	 * @param \MediaWiki\Output\OutputPage $out
 	 * @param \Skin $skin
@@ -34,7 +41,22 @@ class Hooks implements BeforePageDisplayHook, RevisionRecordInsertedHook, PageDe
 			'wgSifterSearchBundlePath',
 			$this->config->get( 'SifterSearchBundlePath' )
 		);
-		$out->addModules( 'ext.sifter' );
+	}
+
+	/**
+	 * Skins whose search box is driven by core's mediawiki.searchSuggest are
+	 * redirected to ext.sifter, which reuses that native suggestion widget but
+	 * feeds it Pagefind results. Skins with their own search module (e.g. Vector
+	 * 2022's Codex typeahead) are left untouched; see
+	 * https://github.com/chaotic-ground/SifterSearch/issues/8
+	 *
+	 * @param RL\Context $context
+	 * @param mixed[] &$config
+	 */
+	public function onSkinPageReadyConfig( RL\Context $context, array &$config ): void {
+		if ( ( $config['searchModule'] ?? null ) === 'mediawiki.searchSuggest' ) {
+			$config['searchModule'] = 'ext.sifter';
+		}
 	}
 
 	/**

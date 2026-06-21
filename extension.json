@@ -14,11 +14,11 @@
 	},
 	"ResourceModules": {
 		"ext.sifter": {
-			"styles": [
-				"ext.sifter.css"
-			],
-			"scripts": [
+			"packageFiles": [
 				"ext.sifter.js"
+			],
+			"dependencies": [
+				"mediawiki.searchSuggest"
 			]
 		}
 	},
@@ -28,6 +28,7 @@
 	},
 	"Hooks": {
 		"BeforePageDisplay": "main",
+		"SkinPageReadyConfig": "main",
 		"RevisionRecordInserted": "main",
 		"PageDeleteComplete": "main"
 	},

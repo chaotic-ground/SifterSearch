@@ -1,51 +1,60 @@
-( function () {
-	'use strict';
+'use strict';
 
-	// Where the Pagefind index bundle (its UI script/style and the index itself)
-	// is served from. Configurable because it need not sit at the site root.
-	const bundlePath = mw.config.get( 'wgSifterSearchBundlePath' ) || '/pagefind/';
+// Where the Pagefind index bundle is served from. Configurable because it need
+// not sit at the site root.
+const bundlePath = mw.config.get( 'wgSifterSearchBundlePath' ) || '/pagefind/';
+const MAX_RESULTS = 10;
 
-	// Place the search box for the active skin: next to the skin's own search
-	// form when one can be found, otherwise at the top of the content area.
-	function ensureContainer() {
-		if ( document.querySelector( '.sifter-search' ) ) {
-			return;
-		}
-		const container = document.createElement( 'div' );
-		container.className = 'sifter-search';
-
-		const host = document.getElementById( 'p-search' ) ||
-			document.getElementById( 'searchform' ) ||
-			document.querySelector( 'form[role="search"]' );
-		if ( host && host.parentNode ) {
-			host.parentNode.insertBefore( container, host.nextSibling );
-			return;
-		}
-
-		const content = document.getElementById( 'mw-content-text' ) || document.body;
-		content.insertBefore( container, content.firstChild );
+let pagefindPromise = null;
+function loadPagefind() {
+	if ( !pagefindPromise ) {
+		// Pagefind is published only as an ES module, so load it dynamically.
+		// eslint-disable-next-line es-x/no-dynamic-import
+		pagefindPromise = import( bundlePath + 'pagefind.js' );
 	}
+	return pagefindPromise;
+}
 
-	function mount() {
-		mw.loader.load( bundlePath + 'pagefind-ui.css', 'text/css' );
+// Run a query and resolve to its result data, or null when a newer query
+// supersedes this one (Pagefind debounces internally).
+function query( term, limit ) {
+	return loadPagefind()
+		.then( ( pagefind ) => pagefind.debouncedSearch( term ) )
+		.then( ( found ) => {
+			if ( found === null ) {
+				return null;
+			}
+			return Promise.all(
+				found.results.slice( 0, limit ).map( ( result ) => result.data() )
+			);
+		} );
+}
 
-		const script = document.createElement( 'script' );
-		script.src = bundlePath + 'pagefind-ui.js';
-		script.onload = function () {
-			ensureContainer();
-			// eslint-disable-next-line no-new
-			new PagefindUI( {
-				element: '.sifter-search',
-				bundlePath: bundlePath,
-				showSubResults: true
+function titleOf( data ) {
+	return ( data.meta && data.meta.title ) || data.url;
+}
+
+// Called by mediawiki.page.ready once a search input is focused, because a
+// SkinPageReadyConfig handler points skins that use core's searchSuggest at this
+// module. The native jquery.suggestions widget, attached by searchSuggest (our
+// dependency), is left intact; only its data source is swapped to Pagefind.
+//
+// Vector 2022's Codex typeahead is a separate, backend-dependent path that does
+// not work on a static export; tracked in
+// https://github.com/chaotic-ground/SifterSearch/issues/8
+module.exports = {
+	init: () => {
+		mw.searchSuggest.request = ( api, term, response, limit ) => {
+			let aborted = false;
+			query( term, limit || MAX_RESULTS ).then( ( items ) => {
+				if ( !aborted && items !== null ) {
+					response( items.map( titleOf ), { query: term } );
+				}
 			} );
+			// searchSuggest calls .abort() on the previous request when cancelling.
+			return { abort: () => {
+				aborted = true;
+			} };
 		};
-		document.head.appendChild( script );
 	}
-
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', mount );
-	} else {
-		mount();
-	}
-}() );
+};
