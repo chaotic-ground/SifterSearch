@@ -36,7 +36,8 @@ function mount() {
 		const ui = new window.PagefindUI( {
 			element: '#sifter-results',
 			bundlePath: bundlePath,
-			showSubResults: true
+			showSubResults: true,
+			showImages: false
 		} );
 		const term = new URLSearchParams( window.location.search ).get( 'search' );
 		if ( term ) {
