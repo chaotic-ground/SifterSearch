@@ -44,18 +44,22 @@ class Hooks implements
 	}
 
 	/**
-	 * Skins whose search box is driven by core's mediawiki.searchSuggest are
-	 * redirected to ext.sifter, which reuses that native suggestion widget but
-	 * feeds it Pagefind results. Skins with their own search module (e.g. Vector
-	 * 2022's Codex typeahead) are left untouched; see
-	 * https://github.com/chaotic-ground/SifterSearch/issues/8
+	 * Redirect a skin's search module to ours so the native search box is fed
+	 * Pagefind results instead of querying a backend:
+	 *  - mediawiki.searchSuggest (legacy skins) -> ext.sifter, which reuses the
+	 *    native jquery.suggestions widget.
+	 *  - skins.vector.search (Vector 2022 Codex typeahead) -> ext.sifter.vector,
+	 *    which mounts Vector's own search app with a Pagefind search client.
 	 *
 	 * @param RL\Context $context
 	 * @param mixed[] &$config
 	 */
 	public function onSkinPageReadyConfig( RL\Context $context, array &$config ): void {
-		if ( ( $config['searchModule'] ?? null ) === 'mediawiki.searchSuggest' ) {
+		$searchModule = $config['searchModule'] ?? null;
+		if ( $searchModule === 'mediawiki.searchSuggest' ) {
 			$config['searchModule'] = 'ext.sifter';
+		} elseif ( $searchModule === 'skins.vector.search' ) {
+			$config['searchModule'] = 'ext.sifter.vector';
 		}
 	}
 
