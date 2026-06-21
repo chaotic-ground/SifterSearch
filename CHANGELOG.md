@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.4.0...v0.5.0) (2026-06-21)
+
+
+### Features
+
+* add a full Pagefind results page (SifterSearchResultsPage) ([#17](https://github.com/chaotic-ground/SifterSearch/issues/17)) ([ab5cd3b](https://github.com/chaotic-ground/SifterSearch/commit/ab5cd3b73aa0ddbc97789499a9f66c244875c897)), closes [#12](https://github.com/chaotic-ground/SifterSearch/issues/12)
+
 ## [0.4.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.3.0...v0.4.0) (2026-06-21)
 
 
