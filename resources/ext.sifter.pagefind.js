@@ -43,11 +43,24 @@ function textOf( html ) {
 	return new DOMParser().parseFromString( html, 'text/html' ).body.textContent;
 }
 
+// The URL of the configured full-results page for a query, or null when no
+// results page is configured. The bare page URL is exposed by the server (it
+// resolves to the static ./Page.html on a static export); the query is appended
+// here because the static build drops it from server-generated URLs.
+function resultsPageUrl( term ) {
+	const url = mw.config.get( 'wgSifterSearchResultsPageUrl' );
+	if ( !url ) {
+		return null;
+	}
+	return term ? url + '?search=' + encodeURIComponent( term ) : url;
+}
+
 // When there is no full-text search page, the search form would submit to the
-// wiki's (absent) Special:Search. Intercept the submit and go to the top
-// Pagefind result for the typed query instead. Skin-agnostic: any search form
-// carries an input[name="search"] (Vector's Codex input and the legacy box
-// alike). Selecting a suggestion is a separate code path, so it is unaffected.
+// wiki's (absent) Special:Search. Intercept the submit and go to the results
+// page if one is configured, otherwise to the top Pagefind result for the typed
+// query. Skin-agnostic: any search form carries an input[name="search"] (Vector's
+// Codex input and the legacy box alike). Selecting a suggestion is a separate
+// code path, so it is unaffected.
 function navigateToTopResultOnSubmit() {
 	document.addEventListener( 'submit', ( e ) => {
 		const form = e.target;
@@ -61,6 +74,11 @@ function navigateToTopResultOnSubmit() {
 		if ( !term ) {
 			return;
 		}
+		const dest = resultsPageUrl( term );
+		if ( dest ) {
+			window.location.assign( dest );
+			return;
+		}
 		query( term, 1 ).then( ( items ) => {
 			if ( items && items.length ) {
 				window.location.assign( items[ 0 ].url );
@@ -69,4 +87,12 @@ function navigateToTopResultOnSubmit() {
 	}, true );
 }
 
-module.exports = { MAX_RESULTS, query, titleOf, textOf, navigateToTopResultOnSubmit };
+module.exports = {
+	MAX_RESULTS,
+	bundlePath,
+	query,
+	titleOf,
+	textOf,
+	resultsPageUrl,
+	navigateToTopResultOnSubmit
+};

@@ -36,6 +36,14 @@
 				"ext.sifter.pagefind",
 				"skins.vector.search"
 			]
+		},
+		"ext.sifter.results": {
+			"packageFiles": [
+				"ext.sifter.results.js"
+			],
+			"dependencies": [
+				"ext.sifter.pagefind"
+			]
 		}
 	},
 	"ResourceFileModulePaths": {
@@ -68,6 +76,10 @@
 		"SifterSearchFullText": {
 			"value": true,
 			"description": "Whether the search box's full-text 'search for pages containing' affordance is shown (linking to the skin's native Special:Search). Set false on sites with no full-text search page, e.g. a static export."
+		},
+		"SifterSearchResultsPage": {
+			"value": "",
+			"description": "Title of a content page on which to mount the full Pagefind results UI (PagefindUI), driven by a ?search= query. When set, the search box's full-text affordance navigates there instead of to the single top result. Empty disables the results page."
 		},
 		"SifterSearchOutputDir": {
 			"value": "",

@@ -9,6 +9,7 @@ use MediaWiki\Page\Hook\PageDeleteCompleteHook;
 use MediaWiki\ResourceLoader as RL;
 use MediaWiki\Revision\Hook\RevisionRecordInsertedHook;
 use MediaWiki\Skins\Hook\SkinPageReadyConfigHook;
+use MediaWiki\Title\Title;
 
 /**
  * Hook handlers for SifterSearch.
@@ -29,18 +30,32 @@ class Hooks implements
 	}
 
 	/**
-	 * Expose the configured bundle path to the client. The search module itself
-	 * is not queued here; it is loaded on demand when a search input is focused,
-	 * wired in via onSkinPageReadyConfig().
+	 * Expose the client config. The search module itself is not queued here; it
+	 * is loaded on demand when a search input is focused, wired in via
+	 * onSkinPageReadyConfig(). The results-UI module is queued only on the
+	 * configured results page.
 	 *
 	 * @param \MediaWiki\Output\OutputPage $out
 	 * @param \Skin $skin
 	 */
 	public function onBeforePageDisplay( $out, $skin ): void {
-		$out->addJsConfigVars( [
+		$vars = [
 			'wgSifterSearchBundlePath' => $this->config->get( 'SifterSearchBundlePath' ),
 			'wgSifterSearchFullText' => $this->config->get( 'SifterSearchFullText' ),
-		] );
+		];
+
+		$resultsPage = $this->config->get( 'SifterSearchResultsPage' );
+		$resultsTitle = $resultsPage !== '' ? Title::newFromText( $resultsPage ) : null;
+		if ( $resultsTitle ) {
+			// The bare page URL (no query); the client appends ?search=, since a
+			// static export drops the query from server-generated URLs.
+			$vars['wgSifterSearchResultsPageUrl'] = $resultsTitle->getLocalURL();
+			if ( $out->getTitle() && $out->getTitle()->equals( $resultsTitle ) ) {
+				$out->addModules( 'ext.sifter.results' );
+			}
+		}
+
+		$out->addJsConfigVars( $vars );
 	}
 
 	/**
