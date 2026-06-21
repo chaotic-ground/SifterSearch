@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.2.0...v0.3.0) (2026-06-21)
+
+
+### Features
+
+* add SifterSearchFullText to show or hide the full-text affordance ([#13](https://github.com/chaotic-ground/SifterSearch/issues/13)) ([6276007](https://github.com/chaotic-ground/SifterSearch/commit/6276007d676e0e119ed978b2cef9085703554d26))
+
 ## [0.2.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.1.0...v0.2.0) (2026-06-21)
 
 
