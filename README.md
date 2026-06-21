@@ -5,10 +5,14 @@
 SifterSearch adds a fast, fully client-side search box to a MediaWiki site,
 backed by a [Pagefind](https://pagefind.app/) index. The index is a set of
 static files and every query runs in the browser, so there is no search server
-and no database query at request time. That suits statically exported wikis and
-smaller sites.
+and no database query at request time.
 
-The name is from *to sift* — *sifting through* a pile to find what you want.
+It was built for [Wikven](https://github.com/chaotic-ground/wikven), a generator
+that exports a MediaWiki as a static site where there is no backend to answer
+searches, so search has to run entirely in the browser. Nothing ties it to
+Wikven, though: it works on any MediaWiki wiki, whether live or statically
+exported, and suits smaller sites that want search without running a search
+server.
 
 ## How it works
 
