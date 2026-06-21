@@ -24,7 +24,8 @@
 			],
 			"dependencies": [
 				"ext.sifter.pagefind",
-				"mediawiki.searchSuggest"
+				"mediawiki.searchSuggest",
+				"mediawiki.util"
 			]
 		},
 		"ext.sifter.vector": {
@@ -63,6 +64,10 @@
 		"SifterSearchBundlePath": {
 			"value": "/pagefind/",
 			"description": "URL path (relative to the served site root) the client loads the Pagefind bundle from."
+		},
+		"SifterSearchFullText": {
+			"value": true,
+			"description": "Whether the search box's full-text 'search for pages containing' affordance is shown (linking to the skin's native Special:Search). Set false on sites with no full-text search page, e.g. a static export."
 		},
 		"SifterSearchOutputDir": {
 			"value": "",
