@@ -4,7 +4,7 @@
 		"wikimedia/client",
 		"wikimedia/mediawiki"
 	],
-	"globals": {
-		"PagefindUI": "readonly"
+	"parserOptions": {
+		"ecmaVersion": 2022
 	}
 }
