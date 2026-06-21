@@ -31,6 +31,15 @@ function mount() {
 	if ( !mw.config.get( 'wgSifterSearchOnResultsPage' ) ) {
 		return;
 	}
+
+	// The results page opts out of indexing, which adds the "Noindexed pages"
+	// tracking category; it is noise on a search page, so hide its footer here
+	// rather than disabling the category wiki-wide.
+	const catlinks = document.getElementById( 'catlinks' );
+	if ( catlinks ) {
+		catlinks.style.display = 'none';
+	}
+
 	const host = document.getElementById( 'mw-content-text' ) || document.body;
 	const element = document.createElement( 'div' );
 	element.id = 'sifter-results';
