@@ -38,12 +38,13 @@ jobs:
         run: composer test
 
       - if: matrix.stage != 'composer-test'
-        uses: femiwiki/quibble-action@dee0c886057c8c5b7fd0e57400efcf77647404db # main
+        uses: femiwiki/quibble-action@ffc9227efa59e085ef82243d81b122ec9c673e53 # main
         with:
           stage: ${{ matrix.stage }}
           # SifterSearch targets MediaWiki 1.45 (extension.json), whose namespaced
           # types (e.g. MediaWiki\JobQueue\Job) the code uses.
           mediawiki-version: REL1_45
-          # PHP 8.3 images, matching the composer dev deps (which require >= 8.2).
+          # PHP 8.3 image, matching the composer dev deps (which require >= 8.2).
+          # phan itself runs in the action's default mediawiki-phan-testrun image
+          # (php-ast 1.1.3, the maintained one).
           quibble-docker-image: quibble-bookworm-php83
-          phan-docker-image: mediawiki-phan-php83
