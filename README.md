@@ -14,8 +14,6 @@ Wikven, though: it works on any MediaWiki wiki, whether live or statically
 exported, and suits smaller sites that want search without running a search
 server.
 
-The name is from *to sift*, as in *sifting through* a pile to find what you want.
-
 ## How it works
 
 The index is built from page **content**, not by crawling a deployed site, so
