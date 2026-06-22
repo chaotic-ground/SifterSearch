@@ -10,13 +10,13 @@ permissions: {}
 jobs:
   # One matrix for all the MediaWiki-toolchain checks. composer-test (phpcs +
   # minus-x) runs directly, since Quibble has no phpcs stage; npm-test (grunt:
-  # eslint, stylelint, banana) and phan run inside a MediaWiki checkout via
-  # Quibble, which phan needs to resolve core symbols.
+  # eslint, stylelint, banana), phpunit, and phan run inside a MediaWiki checkout
+  # via Quibble, which phan needs to resolve core symbols.
   test:
     strategy:
       fail-fast: false
       matrix:
-        stage: [composer-test, npm-test, phan]
+        stage: [composer-test, npm-test, phan, phpunit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3

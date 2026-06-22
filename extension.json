@@ -12,6 +12,9 @@
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\SifterSearch\\": "includes/"
 	},
+	"TestAutoloadNamespaces": {
+		"MediaWiki\\Extension\\SifterSearch\\Tests\\Unit\\": "tests/phpunit/unit/"
+	},
 	"ResourceModules": {
 		"ext.sifter.pagefind": {
 			"packageFiles": [
