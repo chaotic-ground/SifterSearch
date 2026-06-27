@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.5.0...v0.6.0) (2026-06-27)
+
+
+### Features
+
+* hide the category footer on the results page ([#24](https://github.com/chaotic-ground/SifterSearch/issues/24)) ([5394ed3](https://github.com/chaotic-ground/SifterSearch/commit/5394ed38f8b780998c7af5fcff68c81d5f6e5b03))
+* rewrite the legacy "containing" suggestion to the results page ([#26](https://github.com/chaotic-ground/SifterSearch/issues/26)) ([95e3ec8](https://github.com/chaotic-ground/SifterSearch/commit/95e3ec89f23febf5ec4c1274c17f83da054e1370))
+
+
+### Bugfixes
+
+* drop the empty image column from the results page ([#21](https://github.com/chaotic-ground/SifterSearch/issues/21)) ([a49561f](https://github.com/chaotic-ground/SifterSearch/commit/a49561fd58116d559f49b8eb968341c3b043952e))
+* only mount the results widget on the results page ([#23](https://github.com/chaotic-ground/SifterSearch/issues/23)) ([c0896d1](https://github.com/chaotic-ground/SifterSearch/commit/c0896d1ebaffb2b50488080c68c938047684940d))
+* retarget the search form at the results page ([#30](https://github.com/chaotic-ground/SifterSearch/issues/30)) ([0a4f696](https://github.com/chaotic-ground/SifterSearch/commit/0a4f696b3166080c164ed603ef9d8402877f4d81))
+
 ## [0.5.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.4.0...v0.5.0) (2026-06-21)
 
 
