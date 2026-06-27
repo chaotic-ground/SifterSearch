@@ -50,6 +50,10 @@ class Hooks implements
 			// The bare page URL (no query); the client appends ?search=, since a
 			// static export drops the query from server-generated URLs.
 			$vars['wgSifterSearchResultsPageUrl'] = $resultsTitle->getLocalURL();
+			// Retarget the search form at the results page on every page, so a
+			// plain submit reaches SifterSearch even before the on-focus typeahead
+			// module loads (which otherwise 404s on a static export).
+			$out->addModules( 'ext.sifter.retarget' );
 			if ( $out->getTitle() && $out->getTitle()->equals( $resultsTitle ) ) {
 				// Flag the results page so ext.sifter.results only mounts here. A
 				// static export (e.g. wikven) bundles every module into one
