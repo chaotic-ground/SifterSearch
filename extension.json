@@ -47,6 +47,11 @@
 			"dependencies": [
 				"ext.sifter.pagefind"
 			]
+		},
+		"ext.sifter.retarget": {
+			"packageFiles": [
+				"ext.sifter.retarget.js"
+			]
 		}
 	},
 	"ResourceFileModulePaths": {
