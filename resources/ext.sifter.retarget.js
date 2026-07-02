@@ -1,8 +1,9 @@
 'use strict';
 
-// Point the skin's search form at the SifterSearch results page. The skin renders
-// the box aimed at the wiki default (action="/index.php" plus a hidden
-// title="Special:Search"), so a plain submit -- Enter or the search button, before
+// Point the skin's search form, and any fallback link to the wiki search page, at
+// the SifterSearch results page. The skin renders the box aimed at the wiki default
+// (action="/index.php" plus a hidden title="Special:Search"), so a plain submit --
+// Enter or the search button, before
 // the on-focus typeahead module has loaded -- queries the wiki's own search on a
 // live site and 404s on a static export that has no index.php. This runs eagerly
 // on every page, independent of the typeahead, so the native submit path reaches
@@ -40,6 +41,15 @@ function retarget() {
 			form.appendChild( hidden );
 		} );
 	} );
+
+	// Some skins also render a plain link to the wiki search page as a fallback for
+	// when scripts are off (e.g. Vector's collapsed-box toggle links to
+	// Special:Search). Point those at the results page too, so the fallback lands
+	// on the static results page instead of a 404.
+	Array.prototype.forEach.call(
+		document.querySelectorAll( '[role="search"] a[href]' ),
+		( link ) => link.setAttribute( 'href', url )
+	);
 }
 
 if ( document.readyState === 'loading' ) {
