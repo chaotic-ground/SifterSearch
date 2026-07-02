@@ -58,6 +58,10 @@ class Hooks implements
 			// so it stays a JS config var rather than joining ClientConfig.
 			$out->addJsConfigVars( 'wgSifterSearchOnResultsPage', true );
 			$out->addModules( 'ext.sifter.results' );
+			// The results page opts out of indexing, which files it under the
+			// "Noindexed pages" tracking category; that footer is noise on a
+			// search page, so drop its category links before they render.
+			$out->setCategoryLinks( [] );
 		}
 	}
 
