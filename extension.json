@@ -18,7 +18,11 @@
 	"ResourceModules": {
 		"ext.sifter.pagefind": {
 			"packageFiles": [
-				"ext.sifter.pagefind.js"
+				"ext.sifter.pagefind.js",
+				{
+					"name": "config.json",
+					"callback": "MediaWiki\\Extension\\SifterSearch\\ClientConfig::forModules"
+				}
 			]
 		},
 		"ext.sifter": {
@@ -50,7 +54,11 @@
 		},
 		"ext.sifter.retarget": {
 			"packageFiles": [
-				"ext.sifter.retarget.js"
+				"ext.sifter.retarget.js",
+				{
+					"name": "config.json",
+					"callback": "MediaWiki\\Extension\\SifterSearch\\ClientConfig::forModules"
+				}
 			]
 		}
 	},

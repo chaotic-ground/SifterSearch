@@ -8,7 +8,7 @@
 // live site and 404s on a static export that has no index.php. This runs eagerly
 // on every page, independent of the typeahead, so the native submit path reaches
 // SifterSearch consistently. Only loaded when a results page is configured.
-const url = mw.config.get( 'wgSifterSearchResultsPageUrl' );
+const { resultsPageUrl: url } = require( './config.json' );
 
 function retarget() {
 	if ( !url ) {

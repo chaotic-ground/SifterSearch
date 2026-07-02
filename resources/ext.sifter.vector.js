@@ -7,7 +7,7 @@
 // the skin's init() is the documented extension point (used by Wikidata) and
 // avoids the deprecated wgVectorSearchClient config var.
 const {
-	query, titleOf, textOf, MAX_RESULTS, resultsPageUrl, navigateToTopResultOnSubmit
+	query, titleOf, textOf, MAX_RESULTS, fullText, resultsPageUrl, navigateToTopResultOnSubmit
 } = require( 'ext.sifter.pagefind' );
 const vectorSearch = require( 'skins.vector.search' );
 
@@ -33,7 +33,7 @@ function fetchByTitle( term, limit, showDescription ) {
 
 module.exports = {
 	init: () => {
-		if ( mw.config.get( 'wgSifterSearchFullText' ) ) {
+		if ( fullText ) {
 			vectorSearch.init( { fetchByTitle } );
 		} else {
 			// No native full-text search page. Point the "search for pages

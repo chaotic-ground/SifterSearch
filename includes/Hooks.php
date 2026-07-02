@@ -30,41 +30,35 @@ class Hooks implements
 	}
 
 	/**
-	 * Expose the client config. The search module itself is not queued here; it
-	 * is loaded on demand when a search input is focused, wired in via
-	 * onSkinPageReadyConfig(). The results-UI module is queued only on the
-	 * configured results page.
+	 * Queue the page-dependent modules. Site-wide client config ships inside the
+	 * modules themselves (see ClientConfig). The search module is not queued
+	 * here either; it is loaded on demand when a search input is focused, wired
+	 * in via onSkinPageReadyConfig(). The results-UI module is queued only on
+	 * the configured results page.
 	 *
 	 * @param \MediaWiki\Output\OutputPage $out
 	 * @param \Skin $skin
 	 */
 	public function onBeforePageDisplay( $out, $skin ): void {
-		$vars = [
-			'wgSifterSearchBundlePath' => $this->config->get( 'SifterSearchBundlePath' ),
-			'wgSifterSearchFullText' => $this->config->get( 'SifterSearchFullText' ),
-		];
-
 		$resultsPage = $this->config->get( 'SifterSearchResultsPage' );
 		$resultsTitle = $resultsPage !== '' ? Title::newFromText( $resultsPage ) : null;
-		if ( $resultsTitle ) {
-			// The bare page URL (no query); the client appends ?search=, since a
-			// static export drops the query from server-generated URLs.
-			$vars['wgSifterSearchResultsPageUrl'] = $resultsTitle->getLocalURL();
-			// Retarget the search form at the results page on every page, so a
-			// plain submit reaches SifterSearch even before the on-focus typeahead
-			// module loads (which otherwise 404s on a static export).
-			$out->addModules( 'ext.sifter.retarget' );
-			if ( $out->getTitle() && $out->getTitle()->equals( $resultsTitle ) ) {
-				// Flag the results page so ext.sifter.results only mounts here. A
-				// static export (e.g. wikven) bundles every module into one
-				// self-executing file, so the module's code runs on every page and
-				// must gate on this rather than on having been added.
-				$vars['wgSifterSearchOnResultsPage'] = true;
-				$out->addModules( 'ext.sifter.results' );
-			}
+		if ( !$resultsTitle ) {
+			return;
 		}
 
-		$out->addJsConfigVars( $vars );
+		// Retarget the search form at the results page on every page, so a
+		// plain submit reaches SifterSearch even before the on-focus typeahead
+		// module loads (which otherwise 404s on a static export).
+		$out->addModules( 'ext.sifter.retarget' );
+		if ( $out->getTitle() && $out->getTitle()->equals( $resultsTitle ) ) {
+			// Flag the results page so ext.sifter.results only mounts here. A
+			// static export (e.g. wikven) bundles every module into one
+			// self-executing file, so the module's code runs on every page and
+			// must gate on this rather than on having been added. Page-dependent,
+			// so it stays a JS config var rather than joining ClientConfig.
+			$out->addJsConfigVars( 'wgSifterSearchOnResultsPage', true );
+			$out->addModules( 'ext.sifter.results' );
+		}
 	}
 
 	/**
