@@ -8,7 +8,7 @@
 // live site and 404s on a static export that has no index.php. This runs eagerly
 // on every page, independent of the typeahead, so the native submit path reaches
 // SifterSearch consistently. Only loaded when a results page is configured.
-const { resultsPageUrl: url } = require( './config.json' );
+const { resultsPageUrl: url, resultsPageTitle: pageTitle } = require( './config.json' );
 
 function retarget() {
 	if ( !url ) {
@@ -27,13 +27,18 @@ function retarget() {
 			return;
 		}
 		form.setAttribute( 'action', action );
-		// Drop the skin's hidden title=Special:Search before carrying the results
-		// page's own params, so the submit no longer aims at the wiki search.
-		Array.prototype.forEach.call(
-			form.querySelectorAll( 'input[type="hidden"][name="title"]' ),
-			( el ) => el.remove()
-		);
+		// Repoint the skin's hidden title=Special:Search at the results page, so
+		// the submit no longer aims at the wiki search. Kept rather than removed:
+		// Vector's typeahead refuses to mount a search box without a title input.
+		const titleInputs = form.querySelectorAll( 'input[type="hidden"][name="title"]' );
+		Array.prototype.forEach.call( titleInputs, ( el ) => {
+			el.value = pageTitle;
+		} );
 		params.forEach( ( value, name ) => {
+			// The repointed title input already carries the action's title param.
+			if ( name === 'title' && titleInputs.length ) {
+				return;
+			}
 			const hidden = document.createElement( 'input' );
 			hidden.type = 'hidden';
 			hidden.name = name;

@@ -28,6 +28,8 @@ class ClientConfig {
 			// The bare page URL (no query); the client appends ?search=, since a
 			// static export drops the query from server-generated URLs.
 			'resultsPageUrl' => $resultsTitle ? $resultsTitle->getLocalURL() : null,
+			// The page title, for repointing the search form's hidden title input.
+			'resultsPageTitle' => $resultsTitle ? $resultsTitle->getPrefixedText() : null,
 		];
 	}
 }
