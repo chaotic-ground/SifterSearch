@@ -5,7 +5,7 @@
 // module. The native jquery.suggestions widget, attached by searchSuggest (our
 // dependency), is left intact; only its data source is swapped to Pagefind.
 const {
-	query, titleOf, MAX_RESULTS, resultsPageUrl, navigateToTopResultOnSubmit
+	query, titleOf, MAX_RESULTS, fullText, resultsPageUrl, navigateToTopResultOnSubmit
 } = require( 'ext.sifter.pagefind' );
 
 // Repoint core's "search for pages containing X" suggestion at the results page.
@@ -58,7 +58,7 @@ module.exports = {
 		// submit to the results page (or the top Pagefind result), and then either
 		// repoint that suggestion at the results page too or, with no results page
 		// to aim it at, hide the dead affordance.
-		if ( !mw.config.get( 'wgSifterSearchFullText' ) ) {
+		if ( !fullText ) {
 			navigateToTopResultOnSubmit();
 			if ( resultsPageUrl() ) {
 				rewriteSpecialSuggestionLinks();

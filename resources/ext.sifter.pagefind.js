@@ -3,9 +3,12 @@
 // Shared Pagefind access used by the per-skin search integrations. Skin-agnostic
 // so it pulls in no search-UI dependencies of its own.
 
+// Site-wide settings, embedded into the module by ClientConfig.
+const config = require( './config.json' );
+
 // Where the Pagefind index bundle is served from. Configurable because it need
 // not sit at the site root.
-const bundlePath = mw.config.get( 'wgSifterSearchBundlePath' ) || '/pagefind/';
+const bundlePath = config.bundlePath || '/pagefind/';
 const MAX_RESULTS = 10;
 
 let pagefindPromise = null;
@@ -44,11 +47,11 @@ function textOf( html ) {
 }
 
 // The URL of the configured full-results page for a query, or null when no
-// results page is configured. The bare page URL is exposed by the server (it
+// results page is configured. The bare page URL comes from ClientConfig (it
 // resolves to the static ./Page.html on a static export); the query is appended
 // here because the static build drops it from server-generated URLs.
 function resultsPageUrl( term ) {
-	const url = mw.config.get( 'wgSifterSearchResultsPageUrl' );
+	const url = config.resultsPageUrl;
 	if ( !url ) {
 		return null;
 	}
@@ -90,6 +93,7 @@ function navigateToTopResultOnSubmit() {
 module.exports = {
 	MAX_RESULTS,
 	bundlePath,
+	fullText: config.fullText,
 	query,
 	titleOf,
 	textOf,
