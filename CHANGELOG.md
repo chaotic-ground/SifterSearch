@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.1](https://github.com/chaotic-ground/SifterSearch/compare/v0.6.0...v0.6.1) (2026-07-19)
+
+
+### Bugfixes
+
+* repoint the search form's title input instead of removing it ([#35](https://github.com/chaotic-ground/SifterSearch/issues/35)) ([df727a4](https://github.com/chaotic-ground/SifterSearch/commit/df727a4c34646e92d88c20fac440405968045584))
+* retarget the skin's search fallback link at the results page ([#32](https://github.com/chaotic-ground/SifterSearch/issues/32)) ([369c310](https://github.com/chaotic-ground/SifterSearch/commit/369c3107e62a236ccea4f19eeccd7c595a908f82))
+
 ## [0.6.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.5.0...v0.6.0) (2026-06-27)
 
 
