@@ -1,0 +1,45 @@
+---
+name: "build(deps): bump actionlint"
+pipelineid: actionlint
+
+scms:
+  default:
+    kind: github
+    spec:
+      owner: chaotic-ground
+      repository: SifterSearch
+      branch: main
+      user: github-actions[bot]
+      email: 41898282+github-actions[bot]@users.noreply.github.com
+
+actions:
+  default:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      labels:
+        - dependencies
+
+sources:
+  release:
+    name: Latest actionlint release
+    kind: githubrelease
+    spec:
+      owner: rhysd
+      repository: actionlint
+      versionfilter:
+        kind: semver
+    # Releases are tagged v1.7.12; Lint puts the "v" back when it builds the download URL.
+    transformers:
+      - trimprefix: v
+
+targets:
+  workflow:
+    name: 'build(deps): bump actionlint to {{ source "release" }}'
+    kind: file
+    scmid: default
+    sourceid: release
+    spec:
+      file: .github/workflows/lint.yaml
+      matchpattern: 'ACTIONLINT_VERSION: [0-9.]+'
+      replacepattern: 'ACTIONLINT_VERSION: {{ source "release" }}'
