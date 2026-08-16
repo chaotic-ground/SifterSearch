@@ -1,3 +1,4 @@
+---
 name: Quibble
 
 on:
@@ -25,12 +26,12 @@ jobs:
         stage: [composer-test, npm-test, phan, phpunit]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
 
       - if: matrix.stage == 'composer-test'
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # 2.37.2
         with:
           php-version: "8.3"
           tools: composer
@@ -44,7 +45,7 @@ jobs:
         run: composer test
 
       - if: matrix.stage != 'composer-test'
-        uses: femiwiki/quibble-action@d799e5bb348756ea1588f2b5f2ca7fc09fdbdac9 # v2.0.1
+        uses: femiwiki/quibble-action@d799e5bb348756ea1588f2b5f2ca7fc09fdbdac9  # v2.0.1
         with:
           stage: ${{ matrix.stage }}
           # SifterSearch targets MediaWiki 1.45 (extension.json), whose namespaced
