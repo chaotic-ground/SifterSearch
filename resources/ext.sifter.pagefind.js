@@ -63,8 +63,14 @@ function resultsPageUrl( term ) {
 // page if one is configured, otherwise to the top Pagefind result for the typed
 // query. Skin-agnostic: any search form carries an input[name="search"] (Vector's
 // Codex input and the legacy box alike). Selecting a suggestion is a separate
-// code path, so it is unaffected.
+// code path, so it is unaffected. Hooked once: Minerva's search dialog is a
+// route, so page.ready re-runs the search module's init() on every visit to it.
+let submitHooked = false;
 function navigateToTopResultOnSubmit() {
+	if ( submitHooked ) {
+		return;
+	}
+	submitHooked = true;
 	document.addEventListener( 'submit', ( e ) => {
 		const form = e.target;
 		const input = form.querySelector &&

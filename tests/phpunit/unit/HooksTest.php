@@ -22,12 +22,38 @@ class HooksTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
+	 * A ResourceLoader that has the named modules and records what is registered.
+	 *
+	 * @param string[] $registeredModules
+	 * @param array &$registry Filled with the modules the handler registers.
+	 * @return ResourceLoader
+	 */
+	private function newResourceLoader( array $registeredModules, array &$registry ) {
+		$resourceLoader = $this->createMock( ResourceLoader::class );
+		$resourceLoader->method( 'isModuleRegistered' )
+			->willReturnCallback(
+				static fn ( $name ) => in_array( $name, $registeredModules, true )
+					|| isset( $registry[$name] )
+			);
+		$resourceLoader->method( 'register' )
+			->willReturnCallback( static function ( $name, $info ) use ( &$registry ) {
+				$registry[$name] = $info;
+			} );
+		return $resourceLoader;
+	}
+
+	/**
 	 * @dataProvider provideSearchModules
 	 */
 	public function testSearchModuleIsRedirected( string $skinModule, string $expected ) {
+		$registry = [];
+		$context = $this->createMock( Context::class );
+		$context->method( 'getResourceLoader' )->willReturn(
+			$this->newResourceLoader( [ 'ext.sifter', 'ext.sifter.vector', 'ext.sifter.minerva' ], $registry )
+		);
 		$config = [ 'search' => true, 'searchModule' => $skinModule ];
 
-		$this->newHooks()->onSkinPageReadyConfig( $this->createMock( Context::class ), $config );
+		$this->newHooks()->onSkinPageReadyConfig( $context, $config );
 
 		$this->assertSame( $expected, $config['searchModule'] );
 	}
@@ -41,26 +67,51 @@ class HooksTest extends MediaWikiUnitTestCase {
 		];
 	}
 
+	public function testAnUnregisteredAdapterIsNotNamed() {
+		$registry = [];
+		$context = $this->createMock( Context::class );
+		$context->method( 'getResourceLoader' )->willReturn(
+			$this->newResourceLoader( [ 'ext.sifter' ], $registry )
+		);
+		$config = [ 'search' => true, 'searchModule' => 'skins.minerva.search' ];
+
+		$this->newHooks()->onSkinPageReadyConfig( $context, $config );
+
+		$this->assertSame( 'skins.minerva.search', $config['searchModule'] );
+	}
+
 	public function testOnlyInstalledSkinsGetAnAdapter() {
-		$registered = [];
-		$resourceLoader = $this->createMock( ResourceLoader::class );
-		$resourceLoader->method( 'isModuleRegistered' )
-			->willReturnCallback( static fn ( $name ) => $name === 'skins.vector.search' );
-		$resourceLoader->method( 'register' )
-			->willReturnCallback( static function ( $name, $info ) use ( &$registered ) {
-				$registered[$name] = $info;
-			} );
+		$registry = [];
 
-		$this->newHooks()->onResourceLoaderRegisterModules( $resourceLoader );
+		$this->newHooks()->onResourceLoaderRegisterModules(
+			$this->newResourceLoader( [ 'skins.vector.search' ], $registry )
+		);
 
-		$this->assertSame( [ 'ext.sifter.vector' ], array_keys( $registered ) );
+		$this->assertSame( [ 'ext.sifter.vector' ], array_keys( $registry ) );
 		$this->assertSame(
 			[ 'ext.sifter.pagefind', 'skins.vector.search' ],
-			$registered['ext.sifter.vector']['dependencies']
+			$registry['ext.sifter.vector']['dependencies']
 		);
+	}
+
+	public function testEachAdapterPointsAtAFileThatExists() {
+		$registry = [];
+
+		$this->newHooks()->onResourceLoaderRegisterModules(
+			$this->newResourceLoader( [ 'skins.vector.search', 'skins.minerva.search' ], $registry )
+		);
+
+		// CI installs no skins, so this is the only thing that reads these
+		// definitions: without it a renamed file would ship registered and 404.
 		$this->assertSame(
-			[ 'ext.sifter.vector.js' ],
-			$registered['ext.sifter.vector']['packageFiles']
+			[ 'ext.sifter.vector', 'ext.sifter.minerva' ],
+			array_keys( $registry )
 		);
+		foreach ( $registry as $name => $info ) {
+			$this->assertFileExists(
+				$info['localBasePath'] . '/' . $info['packageFiles'][0],
+				"$name is registered with a package file that does not exist"
+			);
+		}
 	}
 }

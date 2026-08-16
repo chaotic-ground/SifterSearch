@@ -23,7 +23,7 @@ class Hooks implements
 	PageDeleteCompleteHook
 {
 
-	/** Per-skin typeahead adapters, each keyed by the skin search module it mounts. */
+	/** Per-skin typeahead adapters, each mapped to the skin search module it replaces. */
 	private const SKIN_ADAPTERS = [
 		'ext.sifter.vector' => 'skins.vector.search',
 		'ext.sifter.minerva' => 'skins.minerva.search',
@@ -113,7 +113,12 @@ class Hooks implements
 		// The legacy widget is core's own, so unlike the adapters it is always there.
 		$ours['mediawiki.searchSuggest'] = 'ext.sifter';
 		$searchModule = (string)( $config['searchModule'] ?? '' );
-		if ( isset( $ours[$searchModule] ) ) {
+		if ( !isset( $ours[$searchModule] ) ) {
+			return;
+		}
+		// Only where the replacement was registered above: naming a module that
+		// does not exist would leave the skin with no search at all.
+		if ( $context->getResourceLoader()->isModuleRegistered( $ours[$searchModule] ) ) {
 			$config['searchModule'] = $ours[$searchModule];
 		}
 	}
