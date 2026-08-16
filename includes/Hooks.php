@@ -72,16 +72,21 @@ class Hooks implements
 	 *    native jquery.suggestions widget.
 	 *  - skins.vector.search (Vector 2022 Codex typeahead) -> ext.sifter.vector,
 	 *    which mounts Vector's own search app with a Pagefind search client.
+	 *  - skins.minerva.search (Minerva's Codex typeahead) -> ext.sifter.minerva,
+	 *    the same for Minerva, whose own module queries the REST search API.
 	 *
 	 * @param RL\Context $context
 	 * @param mixed[] &$config
 	 */
 	public function onSkinPageReadyConfig( RL\Context $context, array &$config ): void {
-		$searchModule = $config['searchModule'] ?? null;
-		if ( $searchModule === 'mediawiki.searchSuggest' ) {
-			$config['searchModule'] = 'ext.sifter';
-		} elseif ( $searchModule === 'skins.vector.search' ) {
-			$config['searchModule'] = 'ext.sifter.vector';
+		$ours = [
+			'mediawiki.searchSuggest' => 'ext.sifter',
+			'skins.vector.search' => 'ext.sifter.vector',
+			'skins.minerva.search' => 'ext.sifter.minerva',
+		];
+		$searchModule = (string)( $config['searchModule'] ?? '' );
+		if ( isset( $ours[$searchModule] ) ) {
+			$config['searchModule'] = $ours[$searchModule];
 		}
 	}
 

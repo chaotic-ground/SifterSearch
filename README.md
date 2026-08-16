@@ -28,8 +28,10 @@ the same path serves a live wiki and a static export:
    `$wgSifterSearchOutputDir`. On a live wiki the queue runs via your normal job
    runner; on a static build it is drained by the build's `runJobs` step, so
    SifterSearch needs no knowledge of the build pipeline.
-3. On every page, the client loads the Pagefind UI from the bundle and mounts a
-   search box.
+3. On every page, the client feeds the skin's own search box from the bundle
+   rather than replacing it: Vector 2022's and Minerva's Codex typeaheads are
+   mounted on Pagefind, and skins using core's `mediawiki.searchSuggest` keep
+   the classic suggestions widget with Pagefind behind it.
 
 ## The Pagefind binary
 

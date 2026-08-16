@@ -44,6 +44,15 @@
 				"skins.vector.search"
 			]
 		},
+		"ext.sifter.minerva": {
+			"packageFiles": [
+				"ext.sifter.minerva.js"
+			],
+			"dependencies": [
+				"ext.sifter.pagefind",
+				"skins.minerva.search"
+			]
+		},
 		"ext.sifter.results": {
 			"packageFiles": [
 				"ext.sifter.results.js"
