@@ -33,8 +33,7 @@ the same path serves a live wiki and a static export:
    mounted on Pagefind, and skins using core's `mediawiki.searchSuggest` keep
    the classic suggestions widget with Pagefind behind it. On the page named by
    `$wgSifterSearchResultsPage`, if one is configured, it also mounts Pagefind's
-   full results UI, which is where the search form and the "search for pages
-   containing" affordance lead.
+   full results UI, and points the search form there.
 
 ## The Pagefind binary
 
@@ -51,8 +50,8 @@ or set `$wgSifterSearchPagefindBinary`.
 | `$wgSifterSearchOutputDir` | `""` | The Pagefind bundle directory itself, served at the bundle path (e.g. `<docroot>/pagefind`). Empty disables indexing. |
 | `$wgSifterSearchBundlePath` | `/pagefind/` | URL path the client loads the bundle from. |
 | `$wgSifterSearchCacheDir` | `""` | Rendered-HTML cache for incremental rebuilds. Defaults to a subdirectory of `$wgCacheDirectory`. |
-| `$wgSifterSearchFullText` | `true` | Whether the wiki has a full-text search page of its own. Set false where it does not, e.g. a static export, and the search box's full-text affordance is repointed or dropped. |
-| `$wgSifterSearchResultsPage` | `""` | Title of a content page to mount the full results UI on, driven by `?search=`. Where it is set, the search form and the full-text affordance lead there. |
+| `$wgSifterSearchFullText` | `true` | Whether the wiki has a full-text search page of its own. Set false where it does not, e.g. a static export: the search box's "search for pages containing" affordance then leads to the results page below, or is dropped when there is none. |
+| `$wgSifterSearchResultsPage` | `""` | Title of a content page to mount the full results UI on, driven by `?search=`. Where it is set, the search form is pointed there. |
 | `$wgSifterSearchNamespaces` | `[ NS_MAIN ]` | Namespace IDs to index. |
 | `$wgSifterSearchPagefindBinary` | `""` | Override the Pagefind binary path. Empty auto-detects `bin/`. |
 | `$wgSifterSearchBatchSeconds` | `0` | Delay rebuilds so bursts coalesce into one batch. |

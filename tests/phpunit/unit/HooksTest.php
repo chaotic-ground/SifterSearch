@@ -108,10 +108,31 @@ class HooksTest extends MediaWikiUnitTestCase {
 			array_keys( $registry )
 		);
 		foreach ( $registry as $name => $info ) {
-			$this->assertFileExists(
-				$info['localBasePath'] . '/' . $info['packageFiles'][0],
-				"$name is registered with a package file that does not exist"
-			);
+			foreach ( $info['packageFiles'] as $file ) {
+				$this->assertFileExists(
+					$info['localBasePath'] . '/' . $file,
+					"$name is registered with a package file that does not exist"
+				);
+			}
 		}
+	}
+
+	public function testTheModuleRegisteredIsTheModuleNamed() {
+		$registry = [];
+		$hooks = $this->newHooks();
+		$resourceLoader = $this->newResourceLoader(
+			[ 'ext.sifter', 'skins.minerva.search' ],
+			$registry
+		);
+
+		// Both hooks against one ResourceLoader, in the order a request runs them:
+		// what registration decides is what the swap is allowed to name.
+		$hooks->onResourceLoaderRegisterModules( $resourceLoader );
+		$context = $this->createMock( Context::class );
+		$context->method( 'getResourceLoader' )->willReturn( $resourceLoader );
+		$config = [ 'search' => true, 'searchModule' => 'skins.minerva.search' ];
+		$hooks->onSkinPageReadyConfig( $context, $config );
+
+		$this->assertSame( 'ext.sifter.minerva', $config['searchModule'] );
 	}
 }

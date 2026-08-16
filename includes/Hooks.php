@@ -109,8 +109,9 @@ class Hooks implements
 	 * @param mixed[] &$config
 	 */
 	public function onSkinPageReadyConfig( RL\Context $context, array &$config ): void {
+		// The adapters, plus the legacy widget, which is core's own and so needs no
+		// skin to be installed for us to replace it.
 		$ours = array_flip( self::SKIN_ADAPTERS );
-		// The legacy widget is core's own, so unlike the adapters it is always there.
 		$ours['mediawiki.searchSuggest'] = 'ext.sifter';
 		$searchModule = (string)( $config['searchModule'] ?? '' );
 		if ( !isset( $ours[$searchModule] ) ) {
