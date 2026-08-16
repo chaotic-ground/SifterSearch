@@ -101,18 +101,28 @@ function navigateToTopResultOnSubmit() {
 // fetchByTitle (fetchRecommendationByTitle and loadMore are optional and
 // guarded), so omitting them keeps the search fully client-side.
 function fetchByTitle( term, limit, showDescription ) {
-	const fetch = query( term, limit || MAX_RESULTS ).then( ( items ) => ( {
-		query: term,
-		results: ( items || [] ).map( ( data, index ) => ( {
-			id: index,
-			value: index,
-			key: data.url,
-			label: titleOf( data ),
-			title: titleOf( data ),
-			description: showDescription ? textOf( data.excerpt ) : undefined,
-			url: data.url
-		} ) )
-	} ) );
+	const fetch = query( term, limit || MAX_RESULTS ).then( ( items ) => {
+		if ( items === null ) {
+			// Superseded by a newer query, which is not the same as no results:
+			// answering with an empty list here would empty a dropdown that has
+			// matches in it, since App.vue accepts any answer whose term is still
+			// the one in the box. Never settling leaves the display alone and
+			// lets the newer query be the one that fills it.
+			return new Promise( () => {} );
+		}
+		return {
+			query: term,
+			results: items.map( ( data, index ) => ( {
+				id: index,
+				value: index,
+				key: data.url,
+				label: titleOf( data ),
+				title: titleOf( data ),
+				description: showDescription ? textOf( data.excerpt ) : undefined,
+				url: data.url
+			} ) )
+		};
+	} );
 	return { fetch, abort: () => {} };
 }
 
