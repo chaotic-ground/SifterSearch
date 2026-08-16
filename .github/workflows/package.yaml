@@ -1,3 +1,4 @@
+---
 name: Package
 
 # Reusable: for each platform, bundle the extension together with the matching
@@ -41,9 +42,9 @@ jobs:
             windows: "true"
     runs-on: ubuntu-latest
     permissions:
-      contents: write # gh release upload
+      contents: write  # gh release upload
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
 
@@ -84,9 +85,9 @@ jobs:
   source:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # gh release upload
+      contents: write  # gh release upload
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
       - name: Assemble the binary-less tarball
