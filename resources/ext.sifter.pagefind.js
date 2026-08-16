@@ -63,8 +63,14 @@ function resultsPageUrl( term ) {
 // page if one is configured, otherwise to the top Pagefind result for the typed
 // query. Skin-agnostic: any search form carries an input[name="search"] (Vector's
 // Codex input and the legacy box alike). Selecting a suggestion is a separate
-// code path, so it is unaffected.
+// code path, so it is unaffected. Hooked once: Minerva's search dialog is a
+// route, so page.ready re-runs the search module's init() on every visit to it.
+let submitHooked = false;
 function navigateToTopResultOnSubmit() {
+	if ( submitHooked ) {
+		return;
+	}
+	submitHooked = true;
 	document.addEventListener( 'submit', ( e ) => {
 		const form = e.target;
 		const input = form.querySelector &&
@@ -90,13 +96,51 @@ function navigateToTopResultOnSubmit() {
 	}, true );
 }
 
+// Adapt Pagefind results to the typeahead SearchClient shape; see
+// mediawiki.skinning.typeaheadSearch/restSearchClient.js. App.vue only requires
+// fetchByTitle (fetchRecommendationByTitle and loadMore are optional and
+// guarded), so omitting them keeps the search fully client-side.
+function fetchByTitle( term, limit, showDescription ) {
+	const fetch = query( term, limit || MAX_RESULTS ).then( ( items ) => ( {
+		query: term,
+		results: ( items || [] ).map( ( data, index ) => ( {
+			id: index,
+			value: index,
+			key: data.url,
+			label: titleOf( data ),
+			title: titleOf( data ),
+			description: showDescription ? textOf( data.excerpt ) : undefined,
+			url: data.url
+		} ) )
+	} ) );
+	return { fetch, abort: () => {} };
+}
+
+// Mount a skin's Codex typeahead on Pagefind. Vector 2022 and Minerva both wrap
+// core's mediawiki.skinning.typeaheadSearch app and take the same two optional
+// arguments, a search client and a URL generator, which is the documented
+// extension point (used by Wikidata) and avoids the deprecated
+// wgVectorSearchClient config var.
+function initTypeahead( skinSearch ) {
+	if ( config.fullText ) {
+		skinSearch.init( { fetchByTitle } );
+		return;
+	}
+	// No native full-text search page. Point the "search for pages containing X"
+	// footer at the configured results page (App.vue passes the query to
+	// generateUrl), or hide it when none is configured (App.vue only renders the
+	// footer for a non-empty URL). The form submit is routed the same way.
+	skinSearch.init( { fetchByTitle }, { generateUrl: ( q ) => resultsPageUrl( q ) || '' } );
+	navigateToTopResultOnSubmit();
+}
+
 module.exports = {
 	MAX_RESULTS,
 	bundlePath,
 	fullText: config.fullText,
 	query,
 	titleOf,
-	textOf,
 	resultsPageUrl,
-	navigateToTopResultOnSubmit
+	navigateToTopResultOnSubmit,
+	initTypeahead
 };

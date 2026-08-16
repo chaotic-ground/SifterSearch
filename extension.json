@@ -35,15 +35,6 @@
 				"mediawiki.util"
 			]
 		},
-		"ext.sifter.vector": {
-			"packageFiles": [
-				"ext.sifter.vector.js"
-			],
-			"dependencies": [
-				"ext.sifter.pagefind",
-				"skins.vector.search"
-			]
-		},
 		"ext.sifter.results": {
 			"packageFiles": [
 				"ext.sifter.results.js"
@@ -68,6 +59,7 @@
 	},
 	"Hooks": {
 		"BeforePageDisplay": "main",
+		"ResourceLoaderRegisterModules": "main",
 		"SkinPageReadyConfig": "main",
 		"RevisionRecordInserted": "main",
 		"PageDeleteComplete": "main"
