@@ -40,6 +40,21 @@ function titleOf( data ) {
 	return ( data.meta && data.meta.title ) || data.url;
 }
 
+// Where to send a reader for a result. Pagefind's own URL for it comes from
+// where the page's HTML sat in the crawl cache, which is the URL the wiki serves
+// only where the article path is a file path, e.g. a static export's ./Foo.html.
+// A pretty URL (/wiki/Foo) comes back with a trailing slash, which is a
+// different title, and a query-string one comes back as a slug that is served
+// nowhere. So where the two differ, build the URL from the title, exactly as the
+// wiki would (ClientConfig settles which case this site is).
+function urlOf( data ) {
+	const title = data.meta && data.meta.title;
+	if ( config.indexUrlsAreServed || !title ) {
+		return data.url;
+	}
+	return mw.util.getUrl( title );
+}
+
 // Pagefind excerpts are HTML with <mark> highlights; flatten to text without
 // assigning innerHTML, for UIs that show plain-text descriptions.
 function textOf( html ) {
@@ -90,7 +105,7 @@ function navigateToTopResultOnSubmit() {
 		}
 		query( term, 1 ).then( ( items ) => {
 			if ( items && items.length ) {
-				window.location.assign( items[ 0 ].url );
+				window.location.assign( urlOf( items[ 0 ] ) );
 			}
 		} );
 	}, true );
@@ -119,7 +134,7 @@ function fetchByTitle( term, limit, showDescription ) {
 				label: titleOf( data ),
 				title: titleOf( data ),
 				description: showDescription ? textOf( data.excerpt ) : undefined,
-				url: data.url
+				url: urlOf( data )
 			} ) )
 		};
 	} );
@@ -150,6 +165,7 @@ module.exports = {
 	fullText: config.fullText,
 	query,
 	titleOf,
+	urlOf,
 	resultsPageUrl,
 	navigateToTopResultOnSubmit,
 	initTypeahead

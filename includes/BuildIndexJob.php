@@ -160,30 +160,8 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 		file_put_contents( $manifestPath, json_encode( $manifest ) );
 	}
 
-	/**
-	 * Map a page to a cache file path so the crawler computes a matching result
-	 * URL. Pretty URLs (/wiki/Foo) become wiki/Foo/index.html, i.e. /wiki/Foo/.
-	 * Query-string ($wgArticlePath without rewrites) URLs cannot map to a path
-	 * and fall back to a slug whose URL will not match the live URL.
-	 */
 	private function cachePathForTitle( Title $title ): string {
-		$url = $title->getLocalURL();
-		// Query-string URLs (no rewriting) cannot map to a file path.
-		if ( strpos( $url, '?' ) !== false ) {
-			return 'sifter/' . $title->getArticleID() . '/index.html';
-		}
-		// Strip any leading "./" or "/" so the path is relative to the cache root.
-		$path = ltrim( (string)parse_url( $url, PHP_URL_PATH ), './' );
-		if ( $path === '' ) {
-			return 'sifter/' . $title->getArticleID() . '/index.html';
-		}
-		// A URL already pointing at a file (e.g. wikven's ./Foo.html) keeps its
-		// path; a directory-style URL (/wiki/Foo) gets an index.html so the
-		// crawler's computed URL matches the served one.
-		if ( preg_match( '/\.html?$/i', $path ) ) {
-			return $path;
-		}
-		return rtrim( $path, '/' ) . '/index.html';
+		return IndexUrl::pathFor( $title->getLocalURL(), $title->getArticleID() );
 	}
 
 	private function wrapHtml( string $lang, Title $title, string $bodyHtml ): string {
