@@ -86,11 +86,11 @@
 		},
 		"SifterSearchFullText": {
 			"value": true,
-			"description": "Whether the search box's full-text 'search for pages containing' affordance is shown (linking to the skin's native Special:Search). Set false on sites with no full-text search page, e.g. a static export."
+			"description": "Whether the wiki answers a full-text search of its own (Special:Search). Set false on sites that do not, e.g. a static export: the search box's 'search for pages containing' affordance then leads to SifterSearchResultsPage, or is dropped when no results page is configured."
 		},
 		"SifterSearchResultsPage": {
 			"value": "",
-			"description": "Title of a content page on which to mount the full Pagefind results UI (PagefindUI), driven by a ?search= query. When set, the search box's full-text affordance navigates there instead of to the single top result. Empty disables the results page."
+			"description": "Title of a content page on which to mount the full Pagefind results UI (PagefindUI), driven by a ?search= query. When set, both the search form and the 'search for pages containing' affordance lead there. Empty disables the results page."
 		},
 		"SifterSearchOutputDir": {
 			"value": "",

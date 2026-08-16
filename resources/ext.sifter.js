@@ -12,10 +12,10 @@ const {
 // re-renders cached suggestion lists without asking us again.
 const pageUrls = new Map();
 
-// Where a suggestion link should point, for a wiki with no full-text search:
-// a title row at the page Pagefind found, as Vector's own typeahead does, and
-// the "search for pages containing X" row at the results page, or nowhere when
-// none is configured (it is hidden then).
+// Where a suggestion link should point, once init() has decided that core's own
+// href needs replacing: a title row at the page Pagefind found, as Vector's
+// typeahead does, and the "search for pages containing X" row at the results
+// page, or nowhere when none is configured (it is hidden then).
 function destinationFor( link ) {
 	const special = link.querySelector( '.suggestions-special' );
 	if ( !special ) {
@@ -70,15 +70,18 @@ module.exports = {
 			} };
 		};
 
-		// Core's suggestion links are built out of the search form, which on a
-		// live wiki is MediaWiki's "Go": an exact title lands on the page and the
-		// last row's &fulltext=1 reaches Special:Search. Neither is here, and
-		// ext.sifter.retarget has aimed the form at the results page, so every
-		// link would arrive there with the title as its query. Point them at
-		// where they mean to go and route the submit the same way. A wiki that
-		// does answer a search keeps core's links, Go included.
-		if ( !fullText ) {
+		// Core builds the suggestion links out of the search form: on a wiki that
+		// answers its own search they are MediaWiki's "Go", with the last row's
+		// &fulltext=1 reaching Special:Search. ext.sifter.retarget aims the form
+		// at the results page wherever one is configured, and a wiki with no
+		// full-text search has nothing to aim at anyway, so in both cases every
+		// link would arrive at the results page carrying the title as its query.
+		// Send them where they mean to go instead, and where nothing else carries
+		// the submit, route that too.
+		if ( !fullText || resultsPageUrl() ) {
 			rewriteSuggestionLinks();
+		}
+		if ( !fullText ) {
 			navigateToTopResultOnSubmit();
 			if ( !resultsPageUrl() ) {
 				mw.util.addCSS( '.suggestions-special { display: none; }' );
