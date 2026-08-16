@@ -147,16 +147,21 @@ function fetchByTitle( term, limit, showDescription ) {
 // extension point (used by Wikidata) and avoids the deprecated
 // wgVectorSearchClient config var.
 function initTypeahead( skinSearch ) {
-	if ( config.fullText ) {
+	if ( config.fullText && !resultsPageUrl() ) {
+		// The wiki answers a full-text search itself, and there is nowhere else to
+		// send one, so the skin's own "search for pages containing X" footer stands.
 		skinSearch.init( { fetchByTitle } );
 		return;
 	}
-	// No native full-text search page. Point the "search for pages containing X"
-	// footer at the configured results page (App.vue passes the query to
-	// generateUrl), or hide it when none is configured (App.vue only renders the
-	// footer for a non-empty URL). The form submit is routed the same way.
+	// A results page is where a full-text search goes, whether or not the wiki has
+	// one of its own: configuring it is what says so, and ext.sifter.retarget has
+	// already sent the form there. App.vue passes the query to generateUrl, and
+	// renders the footer only for a non-empty URL, so with no results page and no
+	// full-text search the footer goes away.
 	skinSearch.init( { fetchByTitle }, { generateUrl: ( q ) => resultsPageUrl( q ) || '' } );
-	navigateToTopResultOnSubmit();
+	if ( !config.fullText ) {
+		navigateToTopResultOnSubmit();
+	}
 }
 
 module.exports = {
