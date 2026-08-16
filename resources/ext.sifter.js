@@ -5,11 +5,11 @@
 // module. The native jquery.suggestions widget, attached by searchSuggest (our
 // dependency), is left intact; only its data source is swapped to Pagefind.
 const {
-	query, titleOf, MAX_RESULTS, fullText, resultsPageUrl, navigateToTopResultOnSubmit
+	query, titleOf, urlOf, MAX_RESULTS, fullText, resultsPageUrl, navigateToTopResultOnSubmit
 } = require( 'ext.sifter.pagefind' );
 
-// Page URL of each suggested title, as Pagefind gave it. Kept across queries
-// because the widget re-renders cached suggestion lists without asking us again.
+// Page URL of each suggested title. Kept across queries because the widget
+// re-renders cached suggestion lists without asking us again.
 const pageUrls = new Map();
 
 // Where a suggestion link should point, for a wiki with no full-text search:
@@ -58,7 +58,7 @@ module.exports = {
 				if ( !aborted && items !== null ) {
 					const titles = items.map( ( data ) => {
 						const title = titleOf( data );
-						pageUrls.set( title, data.url );
+						pageUrls.set( title, urlOf( data ) );
 						return title;
 					} );
 					response( titles, { query: term } );
@@ -75,10 +75,8 @@ module.exports = {
 		// last row's &fulltext=1 reaches Special:Search. Neither is here, and
 		// ext.sifter.retarget has aimed the form at the results page, so every
 		// link would arrive there with the title as its query. Point them at
-		// where they mean to go and route the submit the same way. Left alone on
-		// a wiki that does answer a search: Pagefind's URLs come from the crawl
-		// cache's layout (BuildIndexJob::cachePathForTitle) and need not be the
-		// ones the wiki serves, whereas Go always is.
+		// where they mean to go and route the submit the same way. A wiki that
+		// does answer a search keeps core's links, Go included.
 		if ( !fullText ) {
 			rewriteSuggestionLinks();
 			navigateToTopResultOnSubmit();

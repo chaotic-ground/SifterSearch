@@ -23,6 +23,9 @@
 					"name": "config.json",
 					"callback": "MediaWiki\\Extension\\SifterSearch\\ClientConfig::forModules"
 				}
+			],
+			"dependencies": [
+				"mediawiki.util"
 			]
 		},
 		"ext.sifter": {

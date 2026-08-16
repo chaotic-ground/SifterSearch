@@ -30,6 +30,19 @@ class ClientConfig {
 			'resultsPageUrl' => $resultsTitle ? $resultsTitle->getLocalURL() : null,
 			// The page title, for repointing the search form's hidden title input.
 			'resultsPageTitle' => $resultsTitle ? $resultsTitle->getPrefixedText() : null,
+			// Whether a result's own URL is the URL this wiki serves it at, which
+			// depends on the article path (see IndexUrl). Where it is not, the
+			// client builds the URL from the result's title instead.
+			'indexUrlsAreServed' => self::indexUrlsAreServed(),
 		];
+	}
+
+	/**
+	 * Asked of a title that need not exist: the article path is what decides
+	 * this, and it is the same for every page in the namespace.
+	 */
+	private static function indexUrlsAreServed(): bool {
+		$sample = Title::makeTitle( NS_MAIN, 'SifterSearch' );
+		return IndexUrl::isServed( $sample->getLocalURL(), $sample->getArticleID() );
 	}
 }

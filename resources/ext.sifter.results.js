@@ -4,7 +4,24 @@
 // the page named by $wgSifterSearchResultsPage. It mounts Pagefind's prebuilt
 // PagefindUI widget and runs the query taken from the URL (?search=), so a
 // static export gets a real "all results" page with no backend.
-const { bundlePath } = require( 'ext.sifter.pagefind' );
+const { bundlePath, urlOf } = require( 'ext.sifter.pagefind' );
+
+// PagefindUI links each result by the URL the index carries, which is not always
+// the one the wiki serves; processResult is where it lets us say otherwise. A
+// sub-result is its result's URL plus a fragment, so it follows along.
+function servedUrls( result ) {
+	const url = urlOf( result );
+	if ( url === result.url ) {
+		return result;
+	}
+	( result.sub_results || [] ).forEach( ( sub ) => {
+		if ( sub.url && sub.url.startsWith( result.url ) ) {
+			sub.url = url + sub.url.slice( result.url.length );
+		}
+	} );
+	result.url = url;
+	return result;
+}
 
 function loadStyle() {
 	const link = document.createElement( 'link' );
@@ -43,7 +60,8 @@ function mount() {
 			element: '#sifter-results',
 			bundlePath: bundlePath,
 			showSubResults: true,
-			showImages: false
+			showImages: false,
+			processResult: servedUrls
 		} );
 		const term = new URLSearchParams( window.location.search ).get( 'search' );
 		if ( term ) {
