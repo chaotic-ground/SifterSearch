@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.6.1...v0.7.0) (2026-08-16)
+
+
+### Features
+
+* drive Minerva's typeahead with Pagefind ([#40](https://github.com/chaotic-ground/SifterSearch/issues/40)) ([6ef2409](https://github.com/chaotic-ground/SifterSearch/commit/6ef2409f3ec26a2a906e1945b6ca8eada3e737bc))
+
+
+### Bugfixes
+
+* link a result to the URL the wiki serves it at ([#61](https://github.com/chaotic-ground/SifterSearch/issues/61)) ([c8ca816](https://github.com/chaotic-ground/SifterSearch/commit/c8ca8169934f74fb9600327650b865a645e32c7c))
+* link a suggestion to the page it names ([#39](https://github.com/chaotic-ground/SifterSearch/issues/39)) ([0b1e53d](https://github.com/chaotic-ground/SifterSearch/commit/0b1e53db2ae1397ad5d22bd0d7aadb757ea5511b))
+* send a full-text search to one place, not two ([#62](https://github.com/chaotic-ground/SifterSearch/issues/62)) ([a08bc70](https://github.com/chaotic-ground/SifterSearch/commit/a08bc7085ce191d308a4f93b57c7829bd6c2511f))
+* stay silent on a superseded query instead of answering empty ([#60](https://github.com/chaotic-ground/SifterSearch/issues/60)) ([5e7ffc8](https://github.com/chaotic-ground/SifterSearch/commit/5e7ffc8805249d3ba5ae8fab8e488b7ae65a1aa9))
+
 ## [0.6.1](https://github.com/chaotic-ground/SifterSearch/compare/v0.6.0...v0.6.1) (2026-07-19)
 
 
