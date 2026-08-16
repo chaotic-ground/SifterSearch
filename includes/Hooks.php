@@ -7,6 +7,7 @@ use MediaWiki\Hook\BeforePageDisplayHook;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\Hook\PageDeleteCompleteHook;
 use MediaWiki\ResourceLoader as RL;
+use MediaWiki\ResourceLoader\Hook\ResourceLoaderRegisterModulesHook;
 use MediaWiki\Revision\Hook\RevisionRecordInsertedHook;
 use MediaWiki\Skins\Hook\SkinPageReadyConfigHook;
 use MediaWiki\Title\Title;
@@ -16,10 +17,17 @@ use MediaWiki\Title\Title;
  */
 class Hooks implements
 	BeforePageDisplayHook,
+	ResourceLoaderRegisterModulesHook,
 	SkinPageReadyConfigHook,
 	RevisionRecordInsertedHook,
 	PageDeleteCompleteHook
 {
+
+	/** Per-skin typeahead adapters, each keyed by the skin search module it mounts. */
+	private const SKIN_ADAPTERS = [
+		'ext.sifter.vector' => 'skins.vector.search',
+		'ext.sifter.minerva' => 'skins.minerva.search',
+	];
 
 	private JobQueueGroup $jobQueueGroup;
 	private Config $config;
@@ -66,6 +74,28 @@ class Hooks implements
 	}
 
 	/**
+	 * Register the per-skin adapters here rather than in extension.json: each
+	 * depends on its skin's own search module, which exists only where that skin
+	 * is installed, and a module whose dependency is absent is an error (core's
+	 * ResourcesTest fails on it).
+	 *
+	 * @param RL\ResourceLoader $resourceLoader
+	 */
+	public function onResourceLoaderRegisterModules( RL\ResourceLoader $resourceLoader ): void {
+		foreach ( self::SKIN_ADAPTERS as $module => $skinModule ) {
+			if ( !$resourceLoader->isModuleRegistered( $skinModule ) ) {
+				continue;
+			}
+			$resourceLoader->register( $module, [
+				'localBasePath' => __DIR__ . '/../resources',
+				'remoteExtPath' => 'SifterSearch/resources',
+				'packageFiles' => [ "$module.js" ],
+				'dependencies' => [ 'ext.sifter.pagefind', $skinModule ],
+			] );
+		}
+	}
+
+	/**
 	 * Redirect a skin's search module to ours so the native search box is fed
 	 * Pagefind results instead of querying a backend:
 	 *  - mediawiki.searchSuggest (legacy skins) -> ext.sifter, which reuses the
@@ -79,11 +109,9 @@ class Hooks implements
 	 * @param mixed[] &$config
 	 */
 	public function onSkinPageReadyConfig( RL\Context $context, array &$config ): void {
-		$ours = [
-			'mediawiki.searchSuggest' => 'ext.sifter',
-			'skins.vector.search' => 'ext.sifter.vector',
-			'skins.minerva.search' => 'ext.sifter.minerva',
-		];
+		$ours = array_flip( self::SKIN_ADAPTERS );
+		// The legacy widget is core's own, so unlike the adapters it is always there.
+		$ours['mediawiki.searchSuggest'] = 'ext.sifter';
 		$searchModule = (string)( $config['searchModule'] ?? '' );
 		if ( isset( $ours[$searchModule] ) ) {
 			$config['searchModule'] = $ours[$searchModule];
