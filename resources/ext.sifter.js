@@ -8,20 +8,30 @@ const {
 	query, titleOf, MAX_RESULTS, fullText, resultsPageUrl, navigateToTopResultOnSubmit
 } = require( 'ext.sifter.pagefind' );
 
-// Repoint core's "search for pages containing X" suggestion at the results page.
-// searchSuggest rebuilds that link (with a trailing &fulltext=1 aimed at the
-// absent Special:Search) on every keystroke, so watch the suggestion containers
-// and overwrite the href as it is (re)written. The check makes our own write a
-// no-op on the next callback, so it settles instead of looping.
-function rewriteSpecialSuggestionLinks() {
+// Page URL of each suggested title, as Pagefind gave it. Kept across queries
+// because the widget re-renders cached suggestion lists without asking us again.
+const pageUrls = new Map();
+
+// Where a suggestion link should point, for a wiki with no full-text search:
+// a title row at the page Pagefind found, as Vector's own typeahead does, and
+// the "search for pages containing X" row at the results page, or nowhere when
+// none is configured (it is hidden then).
+function destinationFor( link ) {
+	const special = link.querySelector( '.suggestions-special' );
+	if ( !special ) {
+		return pageUrls.get( link.textContent ) || null;
+	}
+	const queryEl = special.querySelector( '.special-query' );
+	return resultsPageUrl( queryEl ? queryEl.textContent : '' );
+}
+
+// searchSuggest rebuilds the links on every keystroke, so watch the suggestion
+// containers and overwrite each href as it is (re)written. The check makes our
+// own write a no-op on the next callback, so it settles instead of looping.
+function rewriteSuggestionLinks() {
 	const rewrite = () => {
-		for ( const special of document.querySelectorAll( '.suggestions-special' ) ) {
-			const link = special.parentElement;
-			if ( !link || !link.classList.contains( 'mw-searchSuggest-link' ) ) {
-				continue;
-			}
-			const queryEl = special.querySelector( '.special-query' );
-			const dest = resultsPageUrl( queryEl ? queryEl.textContent : '' );
+		for ( const link of document.querySelectorAll( '.mw-searchSuggest-link' ) ) {
+			const dest = destinationFor( link );
 			if ( dest && link.getAttribute( 'href' ) !== dest ) {
 				link.setAttribute( 'href', dest );
 			}
@@ -36,6 +46,8 @@ function rewriteSpecialSuggestionLinks() {
 			attributeFilter: [ 'href' ]
 		} );
 	}
+	// Rows rendered before this ran, from a query typed while the module loaded.
+	rewrite();
 }
 
 module.exports = {
@@ -44,7 +56,12 @@ module.exports = {
 			let aborted = false;
 			query( term, limit || MAX_RESULTS ).then( ( items ) => {
 				if ( !aborted && items !== null ) {
-					response( items.map( titleOf ), { query: term } );
+					const titles = items.map( ( data ) => {
+						const title = titleOf( data );
+						pageUrls.set( title, data.url );
+						return title;
+					} );
+					response( titles, { query: term } );
 				}
 			} );
 			// searchSuggest calls .abort() on the previous request when cancelling.
@@ -53,16 +70,19 @@ module.exports = {
 			} };
 		};
 
-		// The native "search for pages containing X" suggestion points at the
-		// wiki's full-text search, which a static export lacks. Send the form
-		// submit to the results page (or the top Pagefind result), and then either
-		// repoint that suggestion at the results page too or, with no results page
-		// to aim it at, hide the dead affordance.
+		// Core's suggestion links are built out of the search form, which on a
+		// live wiki is MediaWiki's "Go": an exact title lands on the page and the
+		// last row's &fulltext=1 reaches Special:Search. Neither is here, and
+		// ext.sifter.retarget has aimed the form at the results page, so every
+		// link would arrive there with the title as its query. Point them at
+		// where they mean to go and route the submit the same way. Left alone on
+		// a wiki that does answer a search: Pagefind's URLs come from the crawl
+		// cache's layout (BuildIndexJob::cachePathForTitle) and need not be the
+		// ones the wiki serves, whereas Go always is.
 		if ( !fullText ) {
+			rewriteSuggestionLinks();
 			navigateToTopResultOnSubmit();
-			if ( resultsPageUrl() ) {
-				rewriteSpecialSuggestionLinks();
-			} else {
+			if ( !resultsPageUrl() ) {
 				mw.util.addCSS( '.suggestions-special { display: none; }' );
 			}
 		}
