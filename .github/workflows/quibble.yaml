@@ -7,6 +7,12 @@ on:
 
 permissions: {}
 
+# Cancel superseded runs; pushes to main are left to finish, keeping a result per merged commit.
+# Worth more here than elsewhere: every stage boots a full MediaWiki checkout.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
 jobs:
   # One matrix for all the MediaWiki-toolchain checks. composer-test (phpcs +
   # minus-x) runs directly, since Quibble has no phpcs stage; npm-test (grunt:
