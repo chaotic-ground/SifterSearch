@@ -30,10 +30,14 @@ class HooksTest extends MediaWikiUnitTestCase {
 	 */
 	private function newResourceLoader( array $registeredModules, array &$registry ) {
 		$resourceLoader = $this->createMock( ResourceLoader::class );
+		// A closure rather than an arrow function: this has to see what the
+		// registration hook registers, which an arrow function's by-value capture
+		// of $registry would not.
 		$resourceLoader->method( 'isModuleRegistered' )
 			->willReturnCallback(
-				static fn ( $name ) => in_array( $name, $registeredModules, true )
-					|| isset( $registry[$name] )
+				static function ( $name ) use ( $registeredModules, &$registry ) {
+					return in_array( $name, $registeredModules, true ) || isset( $registry[$name] );
+				}
 			);
 		$resourceLoader->method( 'register' )
 			->willReturnCallback( static function ( $name, $info ) use ( &$registry ) {
