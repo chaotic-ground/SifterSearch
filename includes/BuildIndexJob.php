@@ -118,18 +118,21 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 
 		$wikiPageFactory = $services->getWikiPageFactory();
 		$parserOptions = ParserOptions::newFromAnon();
-		$lang = $services->getContentLanguage()->getHtmlCode();
 
 		$seen = [];
 		foreach ( $res as $row ) {
 			$id = (int)$row->page_id;
 			$seen[$id] = true;
-			if ( isset( $manifest[$id] ) && $manifest[$id]['touched'] === $row->page_touched ) {
+
+			// Built before the freshness check because the page's language is half of it. That
+			// costs a title load per unchanged page, against a parse saved for every changed one.
+			$title = Title::makeTitle( $row->page_namespace, $row->page_title );
+			$lang = $title->getPageLanguage()->getHtmlCode();
+			if ( self::isCacheCurrent( $manifest[$id] ?? null, $row->page_touched, $lang ) ) {
 				// Unchanged since the last run: keep the cached HTML as-is.
 				continue;
 			}
 
-			$title = Title::makeTitle( $row->page_namespace, $row->page_title );
 			$page = $wikiPageFactory->newFromTitle( $title );
 			$parserOutput = $page->getParserOutput( $parserOptions );
 			if ( !$parserOutput ) {
@@ -146,7 +149,7 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 				$relPath,
 				$this->wrapHtml( $lang, $title, $parserOutput->getContentHolderText() )
 			);
-			$manifest[$id] = [ 'touched' => $row->page_touched, 'file' => $relPath ];
+			$manifest[$id] = [ 'touched' => $row->page_touched, 'file' => $relPath, 'lang' => $lang ];
 		}
 
 		// Drop pages that no longer exist (deleted, or now redirects).
@@ -164,6 +167,33 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 		return IndexUrl::pathFor( $title->getLocalURL(), $title->getArticleID() );
 	}
 
+	/**
+	 * Whether a manifest entry still describes what this run would write for the page.
+	 *
+	 * page_touched alone is not enough: the cached HTML carries the page's language, and a
+	 * manifest written before this was recorded carries none at all. Without the language in the
+	 * comparison, an upgrade would leave every page that had not since been edited wrapped in the
+	 * language the old code stamped, and the bundle half migrated.
+	 *
+	 * @param ?array $entry The page's manifest entry, or null when it has none.
+	 * @param string $touched The page's current page_touched.
+	 * @param string $lang The page's current language, as it would be stamped now.
+	 */
+	private static function isCacheCurrent( ?array $entry, string $touched, string $lang ): bool {
+		return $entry !== null
+			&& ( $entry['touched'] ?? null ) === $touched
+			&& ( $entry['lang'] ?? null ) === $lang;
+	}
+
+	/**
+	 * The page, as the one document Pagefind will index it from.
+	 *
+	 * $lang is the page's own language, not the wiki's. Pagefind reads it from this element and
+	 * builds one index per language it finds, and its client then picks the index matching the
+	 * language of the page the reader is searching from. Stamping the wiki's content language on
+	 * every page collapsed that into a single index: translations were tokenised and stemmed by
+	 * English rules, and a reader on a translated page was answered out of the English index.
+	 */
 	private function wrapHtml( string $lang, Title $title, string $bodyHtml ): string {
 		$titleText = htmlspecialchars( $title->getPrefixedText() );
 		return '<!DOCTYPE html><html lang="' . htmlspecialchars( $lang ) . '">'

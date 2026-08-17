@@ -46,4 +46,45 @@ class BuildIndexJobTest extends MediaWikiUnitTestCase {
 		$this->assertStringContainsString( '<h1>A &amp; B</h1>', $html );
 		$this->assertStringContainsString( '<div data-pagefind-body><p>body</p></div>', $html );
 	}
+
+	public function testWrapHtmlStampsThePagesOwnLanguage() {
+		$title = $this->createMock( Title::class );
+		$title->method( 'getPrefixedText' )->willReturn( 'Installation/ko' );
+
+		$html = $this->job()->wrapHtml( 'ko', $title, '<p>설치</p>' );
+
+		// Pagefind reads the language from here and indexes per language, so a translation must
+		// not arrive carrying the wiki's content language.
+		$this->assertStringContainsString( '<html lang="ko">', $html );
+	}
+
+	public static function provideCacheCurrency() {
+		return [
+			'unchanged page keeps its cached html' => [
+				[ 'touched' => '20260817000000', 'file' => 'Foo.html', 'lang' => 'en' ], true
+			],
+			'an edited page is re-rendered' => [
+				[ 'touched' => '20260101000000', 'file' => 'Foo.html', 'lang' => 'en' ], false
+			],
+			'a page whose language changed is re-rendered' => [
+				[ 'touched' => '20260817000000', 'file' => 'Foo.html', 'lang' => 'ko' ], false
+			],
+			// The manifest an older SifterSearch wrote records no language, so every page it
+			// describes is stale: its html carries whatever the wiki's content language was.
+			'an entry from before languages were recorded is stale' => [
+				[ 'touched' => '20260817000000', 'file' => 'Foo.html' ], false
+			],
+			'a page with no entry at all is stale' => [ null, false ],
+		];
+	}
+
+	/**
+	 * @dataProvider provideCacheCurrency
+	 */
+	public function testIsCacheCurrent( ?array $entry, bool $expected ) {
+		$this->assertSame(
+			$expected,
+			$this->job()->isCacheCurrent( $entry, '20260817000000', 'en' )
+		);
+	}
 }
