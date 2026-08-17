@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/chaotic-ground/SifterSearch/compare/v0.7.1...v0.7.2) (2026-08-17)
+
+
+### Bugfixes
+
+* index each page in its own language, not the wiki's ([#69](https://github.com/chaotic-ground/SifterSearch/issues/69)) ([6c406a5](https://github.com/chaotic-ground/SifterSearch/commit/6c406a5e60695be102bf7605125081c07d172ff2))
+* separate the results page query from one the page URL already has ([#67](https://github.com/chaotic-ground/SifterSearch/issues/67)) ([bd84591](https://github.com/chaotic-ground/SifterSearch/commit/bd84591a72f14b44441a0fdce4817592ca660a97)), closes [#65](https://github.com/chaotic-ground/SifterSearch/issues/65)
+
 ## [0.7.1](https://github.com/chaotic-ground/SifterSearch/compare/v0.7.0...v0.7.1) (2026-08-17)
 
 
