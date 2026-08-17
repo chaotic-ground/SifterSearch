@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\SifterSearch;
 
 use MediaWiki\Config\Config;
+use MediaWiki\Extension\SifterSearch\Hook\HookRunner;
 use MediaWiki\JobQueue\GenericParameterJob;
 use MediaWiki\JobQueue\Job;
 use MediaWiki\MediaWikiServices;
@@ -118,15 +119,26 @@ class BuildIndexJob extends Job implements GenericParameterJob {
 
 		$wikiPageFactory = $services->getWikiPageFactory();
 		$parserOptions = ParserOptions::newFromAnon();
+		$hookRunner = new HookRunner( $services->getHookContainer() );
 
 		$seen = [];
 		foreach ( $res as $row ) {
 			$id = (int)$row->page_id;
-			$seen[$id] = true;
 
 			// Built before the freshness check because the page's language is half of it. That
 			// costs a title load per unchanged page, against a parse saved for every changed one.
 			$title = Title::makeTitle( $row->page_namespace, $row->page_title );
+
+			$index = true;
+			$hookRunner->onSifterSearchIndexPage( $title, $index );
+			if ( !$index ) {
+				// Left out of $seen, so the sweep below drops whatever an earlier run cached for
+				// it. A page the wiki starts turning away therefore leaves the index by the same
+				// road a deleted one does, without a second branch to keep in step with this one.
+				continue;
+			}
+			$seen[$id] = true;
+
 			$lang = $title->getPageLanguage()->getHtmlCode();
 			if ( self::isCacheCurrent( $manifest[$id] ?? null, $row->page_touched, $lang ) ) {
 				// Unchanged since the last run: keep the cached HTML as-is.

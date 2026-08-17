@@ -57,6 +57,27 @@ or set `$wgSifterSearchPagefindBinary`.
 | `$wgSifterSearchPagefindBinary` | `""` | Override the Pagefind binary path. Empty auto-detects `bin/`. |
 | `$wgSifterSearchBatchSeconds` | `0` | Delay rebuilds so bursts coalesce into one batch. |
 
+## Hooks
+
+### `SifterSearchIndexPage`
+
+Asked once per page before it is indexed. Every page of the configured namespaces is indexed by
+default, which is the only thing SifterSearch can decide on its own: it sees titles and content,
+not what the wiki means by them. A wiki that knows one of its pages is not worth answering with —
+a duplicate of another under a second title, a page kept for machinery rather than readers — says
+so here.
+
+```php
+public function onSifterSearchIndexPage( Title $title, bool &$index ) {
+    if ( $this->isADuplicateOfAnotherPage( $title ) ) {
+        $index = false;
+    }
+}
+```
+
+A page turned away is dropped from the index the way a deleted one is, so a wiki may change its
+mind: the next run carries it out either way.
+
 ## License
 
 GPL-3.0-or-later
