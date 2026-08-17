@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.7.2...v0.8.0) (2026-08-17)
+
+
+### Features
+
+* ask the wiki whether a page belongs in the index ([#71](https://github.com/chaotic-ground/SifterSearch/issues/71)) ([02b1e35](https://github.com/chaotic-ground/SifterSearch/commit/02b1e35d4d6d47c18f32469e5cc878af5cb45ffa))
+
 ## [0.7.2](https://github.com/chaotic-ground/SifterSearch/compare/v0.7.1...v0.7.2) (2026-08-17)
 
 
