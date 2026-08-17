@@ -59,16 +59,26 @@ class ClientConfig {
 	 * host, say), the site root is not known and the URL is left as it came.
 	 */
 	public static function anchored( string $url, string $bundlePath ): string {
-		// Already root-relative, protocol-relative or absolute: nothing to do.
+		// Already root-relative, protocol-relative or absolute: nothing to do. A
+		// relative URL whose first segment carries a colon (Help:Search.html) is
+		// read as absolute here, exactly as a browser reads it: the "./" is what
+		// tells the two apart, and a host writing relative URLs writes it.
 		if ( $url === '' || str_starts_with( $url, '/' ) ||
 			preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $url )
 		) {
 			return $url;
 		}
-		if ( !str_starts_with( $bundlePath, '/' ) ) {
+		// Only a path anchored at this site's root says where that root is. A
+		// bundle on another host -- protocol-relative, or with a scheme -- says
+		// nothing about it, so the URL is left as it came.
+		if ( !str_starts_with( $bundlePath, '/' ) || str_starts_with( $bundlePath, '//' ) ) {
 			return $url;
 		}
-		$root = rtrim( dirname( rtrim( $bundlePath, '/' ) ), '/' ) . '/';
+		// The bundle path's parent, cut as the string it is: dirname() answers
+		// with a filesystem path, whose root is a backslash on Windows.
+		$path = rtrim( $bundlePath, '/' );
+		$cut = strrpos( $path, '/' );
+		$root = $cut === false ? '/' : substr( $path, 0, $cut + 1 );
 		return $root . preg_replace( '#^(\./)+#', '', $url );
 	}
 

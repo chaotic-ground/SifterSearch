@@ -39,14 +39,29 @@ class ClientConfigTest extends MediaWikiUnitTestCase {
 			'a bundle path without its trailing slash' => [
 				'./Search.html', '/wikven/pagefind', '/wikven/Search.html',
 			],
+			'a namespaced results page, whose colon is what the ./ disambiguates' => [
+				'./Help:Search.html', '/wikven/pagefind/', '/wikven/Help:Search.html',
+			],
 			'a results page below the export root' => [
 				'./Help/Search.html', '/wikven/pagefind/', '/wikven/Help/Search.html',
+			],
+			'a bundle path that is the site root itself' => [
+				'./Search.html', '/', '/Search.html',
 			],
 			'a bundle served from elsewhere, which says nothing about the site root' => [
 				'./Search.html', 'https://cdn.example/pagefind/', './Search.html',
 			],
+			'the same, written protocol-relative' => [
+				'./Search.html', '//cdn.example/pagefind/', './Search.html',
+			],
 			'no bundle path at all' => [
 				'./Search.html', '', './Search.html',
+			],
+			'a URL of its own, which is nobody else to anchor' => [
+				'https://example.org/Search', '/wikven/pagefind/', 'https://example.org/Search',
+			],
+			'one written protocol-relative' => [
+				'//example.org/Search', '/wikven/pagefind/', '//example.org/Search',
 			],
 			'no results page URL' => [
 				'', '/pagefind/', '',
