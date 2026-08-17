@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/chaotic-ground/SifterSearch/compare/v0.7.0...v0.7.1) (2026-08-17)
+
+
+### Bugfixes
+
+* anchor the results page URL one bundle carries to every depth ([#64](https://github.com/chaotic-ground/SifterSearch/issues/64)) ([301f56d](https://github.com/chaotic-ground/SifterSearch/commit/301f56dbc07b44e226703f921b53fa6d26529692)), closes [#63](https://github.com/chaotic-ground/SifterSearch/issues/63)
+
 ## [0.7.0](https://github.com/chaotic-ground/SifterSearch/compare/v0.6.1...v0.7.0) (2026-08-16)
 
 
