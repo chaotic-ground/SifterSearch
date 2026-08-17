@@ -49,7 +49,7 @@ or set `$wgSifterSearchPagefindBinary`.
 | Setting | Default | Description |
 | --- | --- | --- |
 | `$wgSifterSearchOutputDir` | `""` | The Pagefind bundle directory itself, served at the bundle path (e.g. `<docroot>/pagefind`). Empty disables indexing. |
-| `$wgSifterSearchBundlePath` | `/pagefind/` | URL path the client loads the bundle from. |
+| `$wgSifterSearchBundlePath` | `/pagefind/` | URL path the client loads the bundle from. Its parent is taken as the site root, which is what anchors a results-page URL a host answers document-relative. |
 | `$wgSifterSearchCacheDir` | `""` | Rendered-HTML cache for incremental rebuilds. Defaults to a subdirectory of `$wgCacheDirectory`. |
 | `$wgSifterSearchFullText` | `true` | Whether the wiki answers a full-text search of its own. Set false where it does not, e.g. a static export: with no results page either, the "search for pages containing" affordance is dropped and a plain submit goes to the top result. |
 | `$wgSifterSearchResultsPage` | `""` | Title of a content page to mount the full results UI on, driven by `?search=`. Where it is set, the search form and the "search for pages containing" affordance both lead there. |
