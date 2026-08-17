@@ -70,7 +70,17 @@ function resultsPageUrl( term ) {
 	if ( !url ) {
 		return null;
 	}
-	return term ? url + '?search=' + encodeURIComponent( term ) : url;
+	if ( !term ) {
+		return url;
+	}
+	// A wiki without pretty URLs answers with a page URL that carries a query of
+	// its own (/index.php?title=Results), and a second "?" would be read as part
+	// of the title rather than as a separator. ext.sifter.retarget splits that
+	// same query off the search form's action for the same reason. Joined here
+	// rather than dropped: index.php routes by the title param, a search param
+	// alongside it notwithstanding, on the 1.45+ this extension requires.
+	const separator = url.includes( '?' ) ? '&' : '?';
+	return url + separator + 'search=' + encodeURIComponent( term );
 }
 
 // When there is no full-text search page, the search form would submit to the
