@@ -1,9 +1,15 @@
 ---
 name: Nightly
 
-# Build the per-platform tarballs from the latest main into a rolling "nightly"
-# prerelease, so downstreams (e.g. wikven) can track SifterSearch without a
-# formal release. Runs daily and on demand.
+# Build the per-platform tarballs from the tip of main and publish them as a
+# dated pre-release: releases/download/nightly-<date>/SifterSearch-linux-<arch>.tar.gz.
+# Downstreams (e.g. wikven) can then track SifterSearch without waiting for a
+# formal release and still pin a tag that means one thing forever, which a
+# rolling tag cannot offer a build that has to be reproducible.
+#
+# GitHub's immutable releases lock a release's assets the moment it is published,
+# so a single tag can't be refreshed in place. Instead each run creates its own
+# draft (drafts stay mutable), attaches the tarballs, then publishes it.
 on:
   schedule:
     - cron: '0 5 * * *'
@@ -12,30 +18,79 @@ on:
 permissions: {}
 
 jobs:
-  release:
+  # Build only when a feat/fix landed since the last nightly; skip a run with only chores/CI.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: check
+        run: |
+          proceed=false
+          last=$(git tag -l 'nightly-*' | sort -r | head -1)
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] || [ -z "$last" ]; then
+            proceed=true
+          elif git log "$last..HEAD" --format='%s' | grep -qE '^(feat|fix)(\(.+\))?!?:'; then
+            proceed=true
+          fi
+          echo "proceed=$proceed" >> "$GITHUB_OUTPUT"
+
+  prepare:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # move the nightly tag and recreate its prerelease
+      contents: write  # create the dated pre-release
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Recreate the rolling nightly release at the current commit
+      - name: Pick a dated tag for this build
+        id: meta
+        run: echo "tag=nightly-$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      # A draft stays mutable so the package job can attach assets; drop any leftover same-day draft first.
+      - name: Create the dated draft pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          gh release delete nightly --yes --cleanup-tag || true
-          gh release create nightly \
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" \
+            --draft \
             --prerelease \
             --target "$GITHUB_SHA" \
-            --title Nightly \
-            --notes "Rolling build of the latest main. Not a stable release."
+            --title "Nightly ${TAG#nightly-}" \
+            --notes "Built from main ($GITHUB_SHA). Not a stable release."
 
   package:
-    needs: release
+    needs: prepare
     permissions:
       contents: write  # gh release upload
     uses: ./.github/workflows/package.yaml
     with:
-      tag: nightly
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  publish:
+    needs: [prepare, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # publish (un-draft) the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Publishing locks the assets, so do it only once every platform has been attached.
+      - name: Publish the dated pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: gh release edit "$TAG" --draft=false
