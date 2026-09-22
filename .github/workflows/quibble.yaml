@@ -45,7 +45,7 @@ jobs:
         run: composer test
 
       - if: matrix.stage != 'composer-test'
-        uses: femiwiki/quibble-action@d799e5bb348756ea1588f2b5f2ca7fc09fdbdac9  # v2.0.1
+        uses: femiwiki/quibble-action@b57e2f3f990ed61d512d283cfb80a31977f2e56d  # v2.1.2
         with:
           stage: ${{ matrix.stage }}
           # SifterSearch targets MediaWiki 1.45 (extension.json), whose namespaced
