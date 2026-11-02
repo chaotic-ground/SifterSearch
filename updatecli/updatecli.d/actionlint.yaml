@@ -34,12 +34,12 @@ sources:
       - trimprefix: v
 
 targets:
-  workflow:
+  tool-versions:
     name: 'build(deps): bump actionlint to {{ source "release" }}'
     kind: file
     scmid: default
     sourceid: release
     spec:
-      file: .github/workflows/lint.yaml
-      matchpattern: 'ACTIONLINT_VERSION: [0-9.]+'
-      replacepattern: 'ACTIONLINT_VERSION: {{ source "release" }}'
+      file: .tool-versions
+      matchpattern: '(?m)^actionlint .*$'
+      replacepattern: 'actionlint {{ source "release" }}'
