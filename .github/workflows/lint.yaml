@@ -21,9 +21,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Run actionlint
-        env:
-          ACTIONLINT_VERSION: 1.7.12
+        # The version lives in .tool-versions, where updatecli can bump it: GITHUB_TOKEN may not
+        # change a workflow file.
         run: |
+          ACTIONLINT_VERSION="$(awk '$1 == "actionlint" { print $2 }' .tool-versions)"
           base=https://github.com/rhysd/actionlint/releases/download
           curl -sSfL "${base}/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" |
             tar xz actionlint

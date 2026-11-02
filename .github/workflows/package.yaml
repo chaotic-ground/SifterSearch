@@ -15,9 +15,6 @@ on:
 
 permissions: {}
 
-env:
-  PAGEFIND_VERSION: v1.6.0
-
 jobs:
   platform:
     strategy:
@@ -53,8 +50,11 @@ jobs:
           TARGET: ${{ matrix.target }}
           BINARY: ${{ matrix.binary }}
           WINDOWS: ${{ matrix.windows }}
+        # The version lives in .tool-versions, where updatecli can bump it: GITHUB_TOKEN may not
+        # change a workflow file.
         run: |
-          base="https://github.com/Pagefind/pagefind/releases/download/${PAGEFIND_VERSION}/pagefind_extended-${PAGEFIND_VERSION}-${TARGET}"
+          version="v$(awk '$1 == "pagefind" { print $2 }' .tool-versions)"
+          base="https://github.com/Pagefind/pagefind/releases/download/${version}/pagefind_extended-${version}-${TARGET}"
           mkdir -p bin
           curl -sSfL "${base}.tar.gz" | tar xz
           if [ "$WINDOWS" = "true" ]; then
