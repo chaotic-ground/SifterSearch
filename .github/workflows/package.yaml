@@ -16,7 +16,7 @@ on:
 permissions: {}
 
 env:
-  PAGEFIND_VERSION: v1.5.2
+  PAGEFIND_VERSION: v1.6.0
 
 jobs:
   platform:
